@@ -47,34 +47,44 @@ public class HackerRankTest {
     static int travelAroundTheWorld(final int[] a, final int[] b, final long c) {
         int n = a.length;
         // <= -1
-        int negatives = 0;
+        int unaccepable = 0;
         // заем
         long borrow = 0;
+
+        // уменьшаемый счетчмк шагов за которые надо погасить долг, если q <= 0 то круг вообще непроходим => вернуть 0;
+        int q = n;
+
         // идем против шерсти
-        for(int i = n-1; i>=0; i--) {
-            long need = borrow  + b[i];
+        for (int i = n - 1; i >= 0; i--) {
+            long delta = (a[i] > c ? c : a[i]) - b[i];
 
-            // если уде имеются негативные и потребуется больше чем лезет в бак маршрут непроходим вообще => 0
-            if (negatives > 0 && need > c)
-                return 0;
+            if (delta < 0) {
+                // если нет непогашенного долга то сбрасываем счётчк шагов для поиска гашения
+                if (borrow == 0)
+                    q = n;
 
-            // если нужно больше чем лезет при отсутствии некативных
-            if(need > c) {
-                // то эат точка негативная конечная непроходимая
+                unaccepable++;
             }
 
+            if (delta == 0 && borrow > 0)
+                unaccepable++;
 
+            // списание накопление
+            borrow -= delta;
 
-
-
+            // но нельзя кредитовать банк
+            if(borrow <= 0)
+                borrow = 0;
         }
 
-        return n-negatives;
+        return n - unaccepable;
     }
 
     @Test
     public void test() {
         assertEquals(2, travelAroundTheWorld(new int[]{3, 1, 2}, new int[]{2, 2, 2}, 3L));
+
+        assertEquals(1, travelAroundTheWorld(new int[]{2, 1, 3}, new int[]{2, 2, 2}, 3L));
 
     }
 
