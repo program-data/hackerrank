@@ -2,6 +2,9 @@ package com.hackerrank;
 
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -11,116 +14,79 @@ import static org.junit.Assert.assertTrue;
 
 public class HackerRankTest {
 
-    static int travelAroundTheWorldStupid(int[] a, int[] b, final long c) {
-        int counter = 0;
-        int n = a.length;
+    private static int travelAroundTheWorld(final int[] a, final int[] b, final long c) {
+        final int N = a.length;
+        int qu = N;
 
-        // меняем стартовый город
-        for (int k = 0; k < n; k++) {
-            if (isSuccess(a, b, c, n, k)) {
-                counter++;
+        int[] d = new int[N];
 
-                System.out.println(k);
-            }
+        // pre-scan
+        List<Integer> negativeIndexes = new ArrayList<>(); // linkedlist
+        for (int i = 0; i < N; i++) {
+            int di = d[i] = delta(a[i], b[i], c);
+            if (di < 0)
+                negativeIndexes.add(i);
         }
 
-        return counter;
-    }
+        // шоколад
+        if (negativeIndexes.isEmpty())
+            return N;
 
-    private static boolean isSuccess(int[] a, int[] b, long c, int n, int k) {
-        // fuel;
-        long f = 0;
-        // проход по маршруту
-        for (int j = 0; j < n; j++) {
-            // индекс в цеелвом массиве
-            int i = j + k < n ? j + k : j + k - n;
-            // остаток к концу шага
-            f = c - a[i] > f ? f + a[i] : c;
-            assertTrue(f <= c);
-            f -= b[i];
+        qu -= negativeIndexes.size();
 
-            if (f < 0)
-                return false;
-        }
-        return true;
-    }
+        // negativeIndexes по определению упорядочены по росту индексов, берем самый старший
+        int j = negativeIndexes.get(negativeIndexes.size() - 1);
 
-    static int travelAroundTheWorld2(final int[] a, final int[] b, final long c) {
-        int n = a.length;
-        // <= -1
-        int unacceptable = 0;
-        // заем
-        long borrow = 0;
-        // сумма дельт
-        long ds = 0;
+        // начальная дельта для самого крайнего негативного узлф, шатано отрицательная
+        int delta = delta(a[j], b[j], c);
 
-        // уменьшаемый счетчмк шагов за которые надо погасить долг, если q <= 0 то круг вообще непроходим => вернуть 0;
-        int q = n;
+        assertTrue(delta < 0);
 
-        // идем против шерсти
-        for (int i = n - 1; i >= 0; i--) {
-            long delta = (a[i] > c ? c : a[i]) - b[i];
+        // откусываем отхвоста негативных
+        negativeIndexes.remove(negativeIndexes.size() - 1);
 
-            ds += delta;
+        // начинаем с предыдущего
+        --j;
 
-            if (delta < 0) {
-                // если нет непогашенного долга то сбрасываем счётчк шагов для поиска гашения
-                if (borrow == 0)
-                    q = n;
+        // идем по кольцу обратно но не более N-1 шагов, за которые надо порешать все отрицательный дельты,
+        // если выходим из цикла поесе полного прохода то return 0 ибо не разрешили все вараинты
+        for (int k = 0; k < N - 1; ++k, --j) {
+            // приземлённый индекс
+            int i = j >= 0 ? j : j + N;
 
-                unacceptable++;
+            int di = d[i];
+
+            if(negativeIndexes.contains(i))
+            {
+                negativeIndexes.remove(negativeIndexes.size() - 1);
             }
 
-            if (delta == 0 && borrow > 0)
-                unacceptable++;
+            // если нет непогашенного долга то пропускаем и это не негативнй
+            if (delta >= 0 && di >= 0) {
+                delta = 0;
+                continue;
+            }
 
-            // списание накопление
-            borrow -= delta;
+            // положительну дельту возможно оставшуюся с предыдущего шага нельзя накапливать, можно только гасить
+            if (delta > 0)
+                delta = 0;
 
-            // но нельзя кредитовать банк
-            if (borrow < 0)
-                borrow = 0;
+            // гасим или еще больше уменьшаем дельту
+            delta += di;
+
+            // елси этот пасажир не гасит накопленный следущими долг то из из этой точки выдвикаться нелья
+            if (delta < 0)
+                --qu;
+
+            if(delta >=0 && negativeIndexes.isEmpty())
+                return qu;
         }
 
-        if (ds < 0)
-            return 0;
-
-        return n - unacceptable;
+        return 0;
     }
 
-    static int travelAroundTheWorld(final int[] a, final int[] b, final long c) {
-        int n = a.length;
-        long d[] = new long[n];
-        long ds = 0;
-
-        // считаем дельты
-        for (int i = 0; i < n; i++) {
-            long delta = (a[i] > c ? c : a[i]) - b[i];
-            d[i] = delta;
-            ds += delta;
-        }
-
-        if (ds < 0)
-            return 0;
-
-        int q = 0;
-        for (int k = 0; k < n; k++) {
-            if(isOk(d,k))
-                q++;
-        }
-
-        return q;
-    }
-
-    private static boolean isOk(long[] d, int k) {
-        int s = 0;int n = d.length;
-        for (int j = 0; j < n; j++) {
-            int i =  j + k < n ? j + k : j + k - n;
-            s+=d[i];
-            if(s<0)
-                return false;
-        }
-        return true;
+    private static int delta(int a, int b, long c) {
+        return  ((int)(a < c ? a : c) - b);
     }
 
     @Test
@@ -136,3 +102,64 @@ public class HackerRankTest {
         assertEquals(0, travelAroundTheWorld(new int[]{3, 1, 2}, new int[]{2, 2, 2}, 2L));
     }
 }
+
+
+//    private static int travelAroundTheWorld(final int[] a, final int[] b, final long c) {
+//        int counter = 0;
+//        int N = a.length;
+//
+//        // pre-scan
+//        List<Integer> negativeIndexes = new ArrayList<>();
+//        for (int i = 0; i < N; i++) {
+//            if(a[i]<b[i])
+//                negativeIndexes.add(i);
+//        }
+//
+//        // шоколад
+//        if(negativeIndexes.isEmpty())
+//            return N;
+//
+//        // придётся жевать варианты
+//
+//        // меняем стартовый город
+//        for (int k = 0; k < N; k++) {
+//            // нефиг его торкать
+//            if(negativeIndexes.contains(k))
+//                continue;
+//
+//            if (isSuccess(a, b, c, N, k, negativeIndexes)) {
+//                counter++;
+//
+//                System.out.println(k);
+//            }
+//        }
+//
+//        return counter;
+//    }
+//
+//    private static boolean isSuccess(int[] a, int[] b, long c, int n, int k, List<Integer> negativeIndexes) {
+//        int negativeVisitedQu = 0;
+//        int negativeIndexesSize = negativeIndexes.size();
+//
+//        // fuel;
+//        long f = 0;
+//        // проход по маршруту
+//        for (int j = 0; j < n; j++) {
+//            // индекс в цеелвом массиве
+//            int i = j + k < n ? j + k : j + k - n;
+//            // остаток к концу шага
+//            f = c - a[i] > f ? f + a[i] : c;
+//            assertTrue(f <= c);
+//            f -= b[i];
+//
+//            if (f < 0)
+//                return false;
+//
+//            if(negativeIndexes.contains(i))
+//                negativeVisitedQu++;
+//
+//            if(negativeVisitedQu >= negativeIndexesSize)
+//                return true;
+//        }
+//        return true;
+//    }
