@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 /**
  * @author michael.malevannyy@gmail.com, 02.02.2019
@@ -21,7 +20,7 @@ public class HackerRankTest {
         int[] d = new int[N];
 
         // pre-scan
-        List<Integer> negativeIndexes = new ArrayList<>(); // linkedlist
+        List<Integer> negativeIndexes = new ArrayList<>(); // linkedlist ?
         for (int i = 0; i < N; i++) {
             int di = d[i] = delta(a[i], b[i], c);
             if (di < 0)
@@ -32,58 +31,128 @@ public class HackerRankTest {
         if (negativeIndexes.isEmpty())
             return N;
 
+        // сразу выкидываем негативных
         qu -= negativeIndexes.size();
 
-        // negativeIndexes по определению упорядочены по росту индексов, берем самый старший
-        int j = negativeIndexes.get(negativeIndexes.size() - 1);
+        // осталось пересчиать индуцированных негативных идущих перед негативнм и неспособнвм погасить будущий долг негативного
+        // negativeIndexes трогать не будем он потребуется для выдачи аргумента подзадче
 
-        // начальная дельта для самого крайнего негативного узлф, шатано отрицательная
-        int delta = delta(a[j], b[j], c);
+        // из этого будем постепенно отстреливать, по хорошему должно разрешиться внутри цикла отстрела иначе амба
+        List<Integer> roundRobin = new ArrayList<>(negativeIndexes);
 
-        assertTrue(delta < 0);
+        int r = roundRobin.size() - 1;
+        int j = roundRobin.get(r);
 
-        // откусываем отхвоста негативных
-        negativeIndexes.remove(negativeIndexes.size() - 1);
+        while (!roundRobin.isEmpty()) {
 
-        // начинаем с предыдущего
-        --j;
+            roundRobin.remove()
 
-        // идем по кольцу обратно но не более N-1 шагов, за которые надо порешать все отрицательный дельты,
-        // если выходим из цикла поесе полного прохода то return 0 ибо не разрешили все вараинты
-        for (int k = 0; k < N - 1; ++k, --j) {
-            // приземлённый индекс
-            int i = j >= 0 ? j : j + N;
 
-            int di = d[i];
-
-            if(negativeIndexes.contains(i))
             {
-                negativeIndexes.remove(negativeIndexes.size() - 1);
+                // начальная дельта для самого крайнего негативного узла, шатано отрицательная
+                int delta = delta(a[j], b[j], c);
+                assert delta < 0;
+
+                // todo simplify
+                // shallow-copy
+                List<Integer> negatives = new ArrayList<>(negativeIndexes);
+
+                // откусываем отхвоста негативных
+                negatives.remove(negatives.size() - 1);
+
+                // начинаем с предыдущего
+                --j;
+
+                // идем по кольцу обратно но не более N-1 шагов, за которые надо порешать все отрицательный дельты,
+                // если выходим из цикла поесе полного прохода то return 0 ибо не разрешили все вараинты
+                for (int k = 0; k < N - 1; ++k, --j) {
+                    // приземлённый индекс
+                    int i = j >= 0 ? j : j + N;
+
+                    int di = d[i];
+
+                    if (negatives.contains(i)) {
+                        negatives.remove(negatives.size() - 1);
+                    }
+
+                    // если нет непогашенного долга то пропускаем и это не негативнй
+                    if (delta >= 0 && di >= 0) {
+                        delta = 0;
+                        continue;
+                    }
+
+                    // положительну дельту возможно оставшуюся с предыдущего шага нельзя накапливать, можно только гасить
+                    if (delta > 0)
+                        delta = 0;
+
+                    // гасим или еще больше уменьшаем дельту
+                    delta += di;
+
+                    // елси этот пасажир не гасит накопленный следущими долг то из из этой точки выдвикаться нелья
+                    if (delta < 0)
+                        --qu;
+
+                    if (delta >= 0 && negatives.isEmpty())
+                        return qu;
+                }
             }
 
-            // если нет непогашенного долга то пропускаем и это не негативнй
-            if (delta >= 0 && di >= 0) {
-                delta = 0;
-                continue;
-            }
-
-            // положительну дельту возможно оставшуюся с предыдущего шага нельзя накапливать, можно только гасить
-            if (delta > 0)
-                delta = 0;
-
-            // гасим или еще больше уменьшаем дельту
-            delta += di;
-
-            // елси этот пасажир не гасит накопленный следущими долг то из из этой точки выдвикаться нелья
-            if (delta < 0)
-                --qu;
-
-            if(delta >=0 && negativeIndexes.isEmpty())
-                return qu;
         }
 
         return 0;
     }
+
+//    private static void tryRound(int[] a, int[] b, long c, int[] d, int N, List<Integer> negativeIndexs, int j) {
+//
+//        // начальная дельта для самого крайнего негативного узла, шатано отрицательная
+//        int delta = delta(a[j], b[j], c);
+//        assert delta < 0;
+//
+//        // shallow-copy
+//        List<Integer> negatives = new ArrayList<>(negativeIndexs);
+//
+//        // откусываем отхвоста негативных
+//        negatives.remove(negatives.size() - 1);
+//
+//        // начинаем с предыдущего
+//        --j;
+//
+//        // идем по кольцу обратно но не более N-1 шагов, за которые надо порешать все отрицательный дельты,
+//        // если выходим из цикла поесе полного прохода то return 0 ибо не разрешили все вараинты
+//        for (int k = 0; k < N - 1; ++k, --j) {
+//            // приземлённый индекс
+//            int i = j >= 0 ? j : j + N;
+//
+//            int di = d[i];
+//
+//            if(negatives.contains(i))
+//            {
+//                negatives.remove(negatives.size() - 1);
+//            }
+//
+//            // если нет непогашенного долга то пропускаем и это не негативнй
+//            if (delta >= 0 && di >= 0) {
+//                delta = 0;
+//                continue;
+//            }
+//
+//            // положительну дельту возможно оставшуюся с предыдущего шага нельзя накапливать, можно только гасить
+//            if (delta > 0)
+//                delta = 0;
+//
+//            // гасим или еще больше уменьшаем дельту
+//            delta += di;
+//
+//            // елси этот пасажир не гасит накопленный следущими долг то из из этой точки выдвикаться нелья
+//            if (delta < 0)
+//                --qu;
+//
+//            if(delta >=0 && negatives.isEmpty())
+//                return qu;
+//        }
+//
+//        return 0;
+//    }
 
     private static int delta(int a, int b, long c) {
         return  ((int)(a < c ? a : c) - b);
