@@ -48,6 +48,14 @@ public class BeautifulQuadruples {
 
     @Test
     public void test() {
-        Assert.assertEquals(11, beautifulQuadruples(1, 2, 4, 3));
+        // ok = Assert.assertEquals(11, beautifulQuadruples(1, 2, 3, 4));
+        Assert.assertEquals(11, beautifulQuadruples(1, 2, 3, 8));
+    }
+
+    @Test
+    public void test1() {
+        for (int i = 0; i < 256; i++) {
+            System.out.printf("%d -> %d, %d\n", i, Integer.highestOneBit(i), 32 - Integer.numberOfLeadingZeros(i) );
+        }
     }
 }
