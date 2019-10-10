@@ -11,31 +11,28 @@ import java.util.*;
  */
 public class Solution {
 
-    //static int H = 1_000_000+1;
     // Complete the solve function below.
+    static int H = 1_000_000+1;
+
     static long solve(int[] arr) {
 
-        TreeMap<Integer, Integer> tree = new TreeMap<>();
+        int[] h = new int[H];
+
         long k = 0;
 
         for (int i = 0; i < arr.length; ++i) {
             int a = arr[i];
 
             // 1) закрыть свои
-            Integer h = tree.get(a);
-            if(h != null) {
-                ++h;
-                tree.put(a, h);
-                k+=h;
-            }
-            else {
-                // 3) добавить себя, новый, если еще нет нас
-                tree.put(a,0);
-            }
+            k+=h[a];
+            ++h[a];
 
             // 2) прибить меньших
-            //tree.removeIf(integer -> integer < a);
-            tree.keySet().removeIf(integer -> integer < a);
+            if(i>0 && arr[i-1] < a) {
+                for (int j = 0; j < a; ++j)
+                    h[j] = 0;
+            }
+
         }
 
         return 2*k;
