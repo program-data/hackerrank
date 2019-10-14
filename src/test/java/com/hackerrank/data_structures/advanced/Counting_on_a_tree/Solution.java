@@ -41,48 +41,98 @@ public class Solution {
         // code contract:
         // new Node[]{}; === final node
         // null = incomplete node
-        public Node[] nodes = null;
+        public Node[] nodes;
 
         public Node(Node parent, int index) {
             this.parent = parent;
             this.index = index;
             this.value = values[index - 1];
+            this.nodes = null;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("%d -> %d", index, value);
         }
 
         public Node growTo(int dst) {
+            // target reached
             if (index == dst)
                 return this;
 
+            // todo
+            //  if(modes != null)
+
             int[] m = Solution.matrix[index];
-            nodes = Arrays.stream(m).filter(value -> parent != null && value != parent.index)
-                    .mapToObj(value -> new Node(this, value))
-                    .toArray(Node[]::new);
+            List<Node> list = new ArrayList<>();
+            for (int i : m) {
+                if (parent == null || i != parent.index) {
+                    Node node1 = new Node(this, i);
+                    list.add(node1);
+                }
+            }
+            nodes = list.toArray(new Node[0]);
+
+            // тупик
+            if (nodes.length == 0)
+                return null;
+
+            // поиск вглубь
+            for (Node node : nodes) {
+                Node target = node.growTo(dst);
+                if (target != null)
+                    return target;
+            }
 
             return null;
         }
-    }
 
-    private static List<Node> getPath(int src, int dst) {
-        // todo cache
-        Node root = new Node(null, src);
-        Node target = root.growTo(dst);
-        ArrayList<Node> path = new ArrayList<>();
-        for (Node node = target; node != null; node = node.parent) {
-            path.add(node);
+        private static List<Node> getPath(int src, int dst) {
+            // todo cache
+            Node root = new Node(null, src);
+            Node target = root.growTo(dst);
+            Objects.requireNonNull(target);
+            ArrayList<Node> path = new ArrayList<>();
+            for (Node node = target; node != null; node = node.parent) {
+                path.add(node);
+            }
+            return path;
         }
-        return path;
     }
 
     private static int solve(int[] query) {
-        getPath(query[0], query[1]);
-        getPath(query[2], query[3]);
+        List<Node> path1 = Node.getPath(query[0], query[1]);
+        List<Node> path2 = Node.getPath(query[2], query[3]);
+        path1.sort(Comparator.comparingInt(o -> o.value));
+        path2.sort(Comparator.comparingInt(o -> o.value));
 
-        return 0;
+        int k=0;
+
+        // int size1 = path1.size();
+        // int size2 = path2.size();
+        // for (int i = 0, j = 0; i < size1 && j < size2; /* BEWARE */) {
+        //     Node ni = path1.get(i);
+        //     Node nj = path1.get(j);
+        //     if(ni.value == nj.value) {
+        //         if(ni.index != nj.index)
+        //             ++k;
+        //     }
+        //
+        // }
+
+
+        for (Node node1 : path1) {
+            for (Node node2 : path2) {
+                if(node1.index != node2.index && node1.value == node2.value)
+                    ++k;
+            }
+        }
+        return k;
     }
 
     // compressed direction matrix
-    static int[][] matrix;
-    static int[] values;
+    private static int[][] matrix;
+    private static int[] values;
 
     // queries === array[k][4]
     static int[] solve(int[] values, int[][] tree, int[][] queries) {
