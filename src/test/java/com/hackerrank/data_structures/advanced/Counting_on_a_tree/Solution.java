@@ -125,10 +125,15 @@ public class Solution {
     static int[][] matrix;
     static int[] values;
     private static int N;
+    private static boolean[][] boo;
 
     // queries === array[k][4]
     static int[] solve(int[] values, int[][] tree, int[][] queries) {
         Solution.matrix = buildCompressedMatrix(tree);
+        matrix[0] = new int[]{};
+        long count = Arrays.stream(matrix).filter(ints -> ints.length > 2).count();
+        boo = new boolean[(int) count][N];
+
         Solution.values = values;
         Solution.N = values.length;
 
@@ -257,11 +262,11 @@ public class Solution {
     private int[] answer;
     @Before // ~13-16 cек
     public void before() throws FileNotFoundException {
-        Object[] objects = load("D:/hackerrank/src/test/java/com/hackerrank/data_structures/advanced/Counting_on_a_tree/input00.txt");
+        Object[] objects = load("D:/hackerrank/src/test/java/com/hackerrank/data_structures/advanced/Counting_on_a_tree/input04.txt");
         c = (int[]) objects[0];
         tree = (int[][]) objects[1];
         queries = (int[][]) objects[2];
-        answer = loadAnswer("D:/hackerrank/src/test/java/com/hackerrank/data_structures/advanced/Counting_on_a_tree/output00.txt");
+        answer = loadAnswer("D:/hackerrank/src/test/java/com/hackerrank/data_structures/advanced/Counting_on_a_tree/output04.txt");
     }
 
     @Test(timeout = 00_000)
