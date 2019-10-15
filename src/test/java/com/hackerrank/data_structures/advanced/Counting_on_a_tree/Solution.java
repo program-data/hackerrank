@@ -1,10 +1,13 @@
 package com.hackerrank.data_structures.advanced.Counting_on_a_tree;
 
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author michael.malevannyy@gmail.com, 10.10.2019
@@ -33,111 +36,101 @@ public class Solution {
         return matrix;
     }
 
-    static class Node {
-        public final Node parent;
-        public final int index;
-        public final int value;
+    // [path]
+    private static int[] getPath(int src, int dst) {
+        int[] path = new int[N];
+        path[0] = src;
 
-        // code contract:
-        // new Node[]{}; === final node
-        // null = incomplete node
-        public Node[] nodes;
+        int k = recursive(path, 0, src, dst);
 
-        public Node(Node parent, int index) {
-            this.parent = parent;
-            this.index = index;
-            this.value = values[index - 1];
-            this.nodes = null;
-        }
+        // can bee faster ?
+        int[] result = new int[k];
+        System.arraycopy(path, 0, result, 0, k);
+        return result;
+    }
 
-        @Override
-        public String toString() {
-            return String.format("%d -> %d", index, value);
-        }
+    private static int recursive(int[] path, int n, int current, int dst) {
+        path[n++] = current;
+        if (current == dst)
+            return n;
 
-        public Node growTo(int dst) {
-            // target reached
-            if (index == dst)
-                return this;
+        int p = n > 1 ? path[n - 2] : 0;
 
-            // todo
-            //  if(modes != null)
+        int[] matrix = Solution.matrix[current];
 
-            int[] m = Solution.matrix[index];
-            List<Node> list = new ArrayList<>();
-            for (int i : m) {
-                if (parent == null || i != parent.index) {
-                    Node node1 = new Node(this, i);
-                    list.add(node1);
-                }
+        for (int c : matrix) {
+            if (c != p) {
+                int k = recursive(path, n, c, dst);
+                if (k > 0)
+                    return k;
             }
-            nodes = list.toArray(new Node[0]);
-
-            // тупик
-            if (nodes.length == 0)
-                return null;
-
-            // поиск вглубь
-            for (Node node : nodes) {
-                Node target = node.growTo(dst);
-                if (target != null)
-                    return target;
-            }
-
-            return null;
         }
 
-        private static List<Node> getPath(int src, int dst) {
-            // todo cache
-            Node root = new Node(null, src);
-            Node target = root.growTo(dst);
-            Objects.requireNonNull(target);
-            ArrayList<Node> path = new ArrayList<>();
-            for (Node node = target; node != null; node = node.parent) {
-                path.add(node);
-            }
-            return path;
-        }
+        return 0;
     }
 
     private static int solve(int[] query) {
-        List<Node> path1 = Node.getPath(query[0], query[1]);
-        List<Node> path2 = Node.getPath(query[2], query[3]);
-        path1.sort(Comparator.comparingInt(o -> o.value));
-        path2.sort(Comparator.comparingInt(o -> o.value));
+        int k = 0;
+        int[] path1 = getPath(query[0], query[1]);
+        int[] path2 = getPath(query[2], query[3]);
 
-        int k=0;
+        int[][] list1 = Arrays.stream(path1).mapToObj(i -> new int[]{values[i - 1], i}).sorted(Comparator.comparingInt((int[] o) -> o[0]).thenComparingInt(o -> o[1])).collect(Collectors.toList()).toArray(new int[][]{});
+        int[][] list2 = Arrays.stream(path2).mapToObj(i -> new int[]{values[i - 1], i}).sorted(Comparator.comparingInt((int[] o) -> o[0]).thenComparingInt(o -> o[1])).collect(Collectors.toList()).toArray(new int[][]{});
 
-        // int size1 = path1.size();
-        // int size2 = path2.size();
-        // for (int i = 0, j = 0; i < size1 && j < size2; /* BEWARE */) {
-        //     Node ni = path1.get(i);
-        //     Node nj = path1.get(j);
-        //     if(ni.value == nj.value) {
-        //         if(ni.index != nj.index)
-        //             ++k;
-        //     }
-        //
-        // }
+        for (int i = 0, j = 0, size1 = list1.length, size2 = list2.length; i < size1 && j < size2; /*BEWARE*/) {
+            int[] ni = list1[i];
+            int[] nj = list2[j];
+            if (ni[0] < nj[0]) {
+                ++i;
+            }
+            else if (ni[0] > nj[0]) {
+                ++j;
+            }
+            else {
+                int si = i; // стартовый индекс в большом массиве
+                for (; i < size1 && list1[i][0] == ni[0]; ++i) ;
 
+                int sj = j; // стартовый индекс в большом массиве
+                for (; j < size2 && list2[j][0] == nj[0]; ++j) ;
 
-        for (Node node1 : path1) {
-            for (Node node2 : path2) {
-                if(node1.index != node2.index && node1.value == node2.value)
-                    ++k;
+                // размер одинакоывых >=1 т.к как минимум один точно будет = текущий
+                // дале есть смысл идти только если кто-то ширше 1 символа
+                int di = i - si;
+                int dj = j - sj;
+
+                int q = 0;
+                // ищщем количество одинаковых индексов и указаных поддиапазонах и вычитаем его из произведения разницы
+                for (int ii = si, ij = sj; ii < i && ij < j; /* BEWARE*/) {
+                    if(list1[ii][1] < list2[ij][1]){
+                        ++ii;
+                    }
+                    else if (list1[ii][1] > list2[ij][1]) {
+                        ++ij;
+                    }
+                    else {
+                        ++q;
+                        ++ii;
+                        ++ij;
+                    }
+                }
+
+                k += di * dj - q;
             }
         }
+
         return k;
     }
 
     // compressed direction matrix
-    private static int[][] matrix;
-    private static int[] values;
+    static int[][] matrix;
+    static int[] values;
+    private static int N;
 
     // queries === array[k][4]
     static int[] solve(int[] values, int[][] tree, int[][] queries) {
-        matrix = buildCompressedMatrix(tree);
+        Solution.matrix = buildCompressedMatrix(tree);
         Solution.values = values;
+        Solution.N = values.length;
 
         int[] result = new int[queries.length];
         for (int i = 0; i < queries.length; i++) {
@@ -146,6 +139,8 @@ public class Solution {
 
         return result;
     }
+
+    /// UNTIL HERE
 
     private static final Scanner scanner = new Scanner(System.in);
 
@@ -255,15 +250,37 @@ public class Solution {
         return new Object[]{c, tree, queries};
     }
 
-    @Test
-    public void test() throws FileNotFoundException {
+    private int[] c;
+    private int[][] tree;
+    private int[][] queries;
+    private int[] solution;
+    private int[] answer;
+    @Before // ~13-16 cек
+    public void before() throws FileNotFoundException {
         Object[] objects = load("D:/hackerrank/src/test/java/com/hackerrank/data_structures/advanced/Counting_on_a_tree/input00.txt");
-        int[] c = (int[]) objects[0];
-        int[][] tree = (int[][]) objects[1];
-        int[][] queries = (int[][]) objects[2];
+        c = (int[]) objects[0];
+        tree = (int[][]) objects[1];
+        queries = (int[][]) objects[2];
+        answer = loadAnswer("D:/hackerrank/src/test/java/com/hackerrank/data_structures/advanced/Counting_on_a_tree/output00.txt");
+    }
 
-        Assert.assertArrayEquals(new int[]{0, 1, 3, 2, 0}, solve(c, tree, queries));
+    @Test(timeout = 00_000)
+    public void test() {
+        solution = solve(c, tree, queries);
+    }
 
+    @After
+    public void after() {
+        Assert.assertArrayEquals(answer, solution);
+    }
+
+    private int[] loadAnswer(String path) throws FileNotFoundException {
+        Scanner scanner = new Scanner(new File(path)).useLocale(Locale.US);
+        List<Integer> list = new ArrayList<>();
+        while (scanner.hasNextInt())
+            list.add(scanner.nextInt());
+
+        return list.stream().mapToInt(value -> value).toArray();
     }
 }
 
