@@ -33,6 +33,9 @@ public class Solution {
             matrix[src] = dst;
         }
 
+        // special unused case, init it for safety only
+        matrix[0] = new int[]{};
+
         return matrix;
     }
 
@@ -49,24 +52,55 @@ public class Solution {
         return result;
     }
 
+    // маркер глубины кроличьей норы // bad practice global variable :(
+    private static int deepEnd;
+
     private static int recursive(int[] path, int n, int current, int dst) {
+        deepEnd = 0;
+
         path[n++] = current;
         if (current == dst)
             return n;
 
-        int p = n > 1 ? path[n - 2] : 0;
-
-        int[] matrix = Solution.matrix[current];
-
-        for (int c : matrix) {
-            if (c != p) {
-                int k = recursive(path, n, c, dst);
-                if (k > 0)
-                    return k;
+        // todo чем дальше dst от медвежьего угла тем быстрее будет брать из кэша
+        if(cache[current].length > 0 && cache[current][dst] > 0) {
+            int next = cache[current][dst];
+            int k = recursive(path, n, next, dst);
+            if (k > 0) {
+                return k;
             }
-        }
 
-        return 0;
+            return 0;
+        }
+        else
+        {
+            // тупой поиск если еще нет в кэше
+            int p = n > 1 ? path[n - 2] : 0;
+
+            int[] matrix = Solution.matrix[current];
+
+            for (int c : matrix) {
+                if (c != p) {
+                    int k = recursive(path, n, c, dst);
+                    if (k > 0) {
+                        return k;
+                    }
+                    else {
+                        // шанс прописать в кэш
+                        if (cache[current].length > 0) {
+                            for (int i = deepEnd; i >= n; --i)
+                                cache[current][path[i]] = c;
+                        }
+                    }
+                }
+            }
+
+            // насколько глубоуо мы залезли
+            if (n - 1 > deepEnd)
+                deepEnd = n - 1;
+
+            return 0;
+        }
     }
 
     private static int solve(int[] query) {
@@ -101,7 +135,7 @@ public class Solution {
                 int q = 0;
                 // ищщем количество одинаковых индексов и указаных поддиапазонах и вычитаем его из произведения разницы
                 for (int ii = si, ij = sj; ii < i && ij < j; /* BEWARE*/) {
-                    if(list1[ii][1] < list2[ij][1]){
+                    if (list1[ii][1] < list2[ij][1]) {
                         ++ii;
                     }
                     else if (list1[ii][1] > list2[ij][1]) {
@@ -126,11 +160,21 @@ public class Solution {
     static int[] values;
     private static int N;
 
+    // кэш
+    private static int[][] cache;
+
     // queries === array[k][4]
     static int[] solve(int[] values, int[][] tree, int[][] queries) {
         Solution.matrix = buildCompressedMatrix(tree);
         Solution.values = values;
         Solution.N = values.length;
+
+        // инициализируем
+        cache = new int[N + 1][];
+        // нулями
+        for (int i = 0, size = matrix.length; i < size; i++)
+            cache[i] = Solution.matrix[i].length > 1 ? new int[N + 1] : new int[0];
+
 
         int[] result = new int[queries.length];
         for (int i = 0; i < queries.length; i++) {
@@ -145,7 +189,7 @@ public class Solution {
     private static final Scanner scanner = new Scanner(System.in);
 
     public static void main(String[] args) throws IOException {
-        BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(System.getenv("OUTPUT_PATH")));
+        BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter("c:/temp/OUTPUT_PATH.txt"));
 
         String[] nq = scanner.nextLine().split(" ");
 
@@ -255,13 +299,14 @@ public class Solution {
     private int[][] queries;
     private int[] solution;
     private int[] answer;
+
     @Before // ~13-16 cек
     public void before() throws FileNotFoundException {
-        Object[] objects = load("D:/hackerrank/src/test/java/com/hackerrank/data_structures/advanced/Counting_on_a_tree/input00.txt");
+        Object[] objects = load("D:/hackerrank/src/test/java/com/hackerrank/data_structures/advanced/Counting_on_a_tree/input04.txt");
         c = (int[]) objects[0];
         tree = (int[][]) objects[1];
         queries = (int[][]) objects[2];
-        answer = loadAnswer("D:/hackerrank/src/test/java/com/hackerrank/data_structures/advanced/Counting_on_a_tree/output00.txt");
+        answer = loadAnswer("D:/hackerrank/src/test/java/com/hackerrank/data_structures/advanced/Counting_on_a_tree/output04.txt");
     }
 
     @Test(timeout = 00_000)
