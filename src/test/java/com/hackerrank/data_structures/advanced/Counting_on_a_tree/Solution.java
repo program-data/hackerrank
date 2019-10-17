@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 /**
  * @author michael.malevannyy@gmail.com, 10.10.2019
  */
+@SuppressWarnings("WeakerAccess")
 public class Solution {
     // Complete the solve function below.
 
@@ -41,74 +42,9 @@ public class Solution {
         return matrix;
     }
 
-    // [path]
-    private static int[] getPath(int src, int dst) {
-        int[] path = new int[N];
-        path[0] = src;
-
-        int k = recursive(path, 0, src, dst);
-
-        // can bee faster ?
-        int[] result = new int[k];
-        System.arraycopy(path, 0, result, 0, k);
-        return result;
-    }
-
-    // маркер глубины кроличьей норы // bad practice global variable :(
-    private static int deepEnd;
-
-    private static int recursive(int[] path, int n, int current, int dst) {
-        deepEnd = 0;
-
-        path[n++] = current;
-        if (current == dst)
-            return n;
-
-        // todo чем дальше dst от медвежьего угла тем быстрее будет брать из кэша
-        if(cache[current].length > 0 && cache[current][dst] > 0) {
-            int next = cache[current][dst];
-            int k = recursive(path, n, next, dst);
-            if (k > 0) {
-                return k;
-            }
-
-            return 0;
-        }
-        else
-        {
-            // тупой поиск если еще нет в кэше
-            int p = n > 1 ? path[n - 2] : 0;
-
-            int[] matrix = Solution.matrix[current];
-
-            for (int c : matrix) {
-                if (c != p) {
-                    int k = recursive(path, n, c, dst);
-                    if (k > 0) {
-                        return k;
-                    }
-                    else {
-                        // шанс прописать в кэш
-                        if (cache[current].length > 0) {
-                            for (int i = deepEnd; i >= n; --i)
-                                cache[current][path[i]] = c;
-                        }
-                    }
-                }
-            }
-
-            // насколько глубоуо мы залезли
-            if (n - 1 > deepEnd)
-                deepEnd = n - 1;
-
-            return 0;
-        }
-    }
-
-    private static int solve(int[] query) {
+    // tests ok
+    private static int count(int[] path1, int[] path2) {
         int k = 0;
-        int[] path1 = getPath(query[0], query[1]);
-        int[] path2 = getPath(query[2], query[3]);
 
         int[][] list1 = Arrays.stream(path1).mapToObj(i -> new int[]{values[i - 1], i}).sorted(Comparator.comparingInt((int[] o) -> o[0]).thenComparingInt(o -> o[1])).collect(Collectors.toList()).toArray(new int[][]{});
         int[][] list2 = Arrays.stream(path2).mapToObj(i -> new int[]{values[i - 1], i}).sorted(Comparator.comparingInt((int[] o) -> o[0]).thenComparingInt(o -> o[1])).collect(Collectors.toList()).toArray(new int[][]{});
@@ -158,36 +94,117 @@ public class Solution {
     }
 
     // compressed direction matrix
-    static int[][] matrix;
-    static int[] values;
     private static int N;
-    private static boolean[][] boo;
-
-    // кэш
-    private static int[][] cache;
+    private static int[] values;
+    private static int[][] matrix;
+    // комутатор, карта *хвост -> ядро сети
+    private static int[] tailToCoreMap;
+    // выбор выходя из ядра
+    private static int[] exitRouter;
+    // мегакоммутатор хвостовы вылета, пока карта
+    static Map<Integer, Map<Integer, int[]>> map = new TreeMap<>();
 
     // queries === array[k][4]
     static int[] solve(int[] values, int[][] tree, int[][] queries) {
-        Solution.matrix = buildCompressedMatrix(tree);
-        Solution.values = values;
         Solution.N = values.length;
-        // long count = Arrays.stream(matrix).filter(ints -> ints.length > 2).count();
+        Solution.values = values;
+        tailToCoreMap = new int[N + 1];
+        exitRouter = new int[N+1];
+        // 1
+        Solution.matrix = buildCompressedMatrix(tree);
 
-        // инициализируем
-        cache = new int[N + 1][];
-        // нулями
-        for (int i = 0, size = matrix.length; i < size; i++) {
-            // System.err.println(i);
-            cache[i] = true && Solution.matrix[i].length > 1 ? new int[N + 1] : new int[0];
+        // 2 фильтруем и отбираем только с 1 соседом = концы хвостов
+        for (int i = 1, size = matrix.length; i < size; i++) {
+            int[] peer = Solution.matrix[i];
+            if (peer.length == 1) {
+                writeTail(i);
+            }
         }
-
 
         int[] result = new int[queries.length];
         for (int i = 0; i < queries.length; i++) {
-            result[i] = solve(queries[i]);
+            int[] query = queries[i];
+            int[] path1 = getPath(query[0], query[1]);
+            int[] path2 = getPath(query[2], query[3]);
+            result[i] = count(path1, path2);
         }
 
         return result;
+    }
+
+    // 3 пиешм хвосты в карту хвост -> ядро
+    // 5 собранные хвосты разворачиваем головй вперед и складываем в коммутоатор вылетов
+    private static void writeTail(int n) {
+        List<Integer> list = new ArrayList<>(12);
+        // TODO refactor .contains()
+        for (int[] peer = Solution.matrix[n]; peer.length < 3; n = !list.contains(peer[0]) ? peer[0] : peer[1], peer = Solution.matrix[n]) {
+            list.add(n);
+        }
+        // головой вперед
+        Collections.reverse(list);
+        // sux
+        int[] tail = list.stream().mapToInt(i -> i).toArray();
+
+        // 3 пиешм хвосты в карту хвост -> ядро
+        for (int t : tail) {
+            tailToCoreMap[t] = tail[0];
+            exitRouter[t] = tail[0];
+        }
+
+        // 5 складываем в мега коммутоатор вылетов
+        Map<Integer, int[]> exit = map.get(n);
+        if (exit != null) {
+            exit.put(tail[0], tail);
+        }
+        else {
+            exit = new TreeMap<>();
+            exit.put(tail[0], tail);
+            map.put(n, exit);
+        }
+    }
+
+    private static int[] getPath(int src, int dst) {
+        List<Integer> path = new ArrayList<>();
+
+        // понять расположение src, dst ибо возожно что:
+        // оба в ядре тогда точки входа будут == 0
+        // оба в одном хвосте тогда у них будет одинаковая точка входа
+
+        // хвосты ростить надо тоже одновременно, это позволит избавиться от мегакоммутатора вылета и выходных хвостов!
+        // более того порядок в пути не имеет никакого смясла, можно просто валить кучей ибо потом будет сортится по значениям
+
+
+
+        // хвост входа, однако мы можем попасть и не в хвост а сразу в ядро
+        // на вызходе из цикла там будет точка вход в ядро
+        int srcCore = src;
+        for (int[] peer = Solution.matrix[srcCore]; peer.length < 3; srcCore = !path.contains(peer[0]) ? peer[0] : peer[1], peer = Solution.matrix[srcCore]) {
+            path.add(srcCore);
+
+            // можем всё решить хвостом
+            if(srcCore == dst)
+                break;
+        }
+
+        if(srcCore != dst) {
+            // целевая точка выхода из ядра , межет быть 0 т.е. выходная точка внутри ядра
+            int dstCore = tailToCoreMap[dst];
+
+            // TODO путь по ядру
+
+            // выходной хвост
+            if (dstCore != 0) {
+
+                Map<Integer, int[]> exitMap = map.get(dstCore);
+
+                int[] tail = exitMap.get(exitRouter[dst]);
+                // хвост вылета
+                for (int i = 0, size = tail.length; i < size; i++) path.add(tail[i]);
+            }
+
+        }
+
+        return path.stream().mapToInt(i -> i).toArray();
     }
 
     /// UNTIL HERE
@@ -308,14 +325,15 @@ public class Solution {
 
     @Before // ~13-16 cек
     public void before() throws FileNotFoundException {
-        Object[] objects = load("D:/hackerrank/src/test/java/com/hackerrank/data_structures/advanced/Counting_on_a_tree/input04.txt");
+        int n = 0;
+        Object[] objects = load(String.format("D:/hackerrank/src/test/java/com/hackerrank/data_structures/advanced/Counting_on_a_tree/input%02d.txt", n));
         c = (int[]) objects[0];
         tree = (int[][]) objects[1];
         queries = (int[][]) objects[2];
-        answer = loadAnswer("D:/hackerrank/src/test/java/com/hackerrank/data_structures/advanced/Counting_on_a_tree/output04.txt");
+        answer = loadAnswer(String.format("D:/hackerrank/src/test/java/com/hackerrank/data_structures/advanced/Counting_on_a_tree/output%02d.txt", n));
     }
 
-    @Test(timeout = 00_000)
+    @Test//(timeout = 15_000)
     public void test() {
         solution = solve(c, tree, queries);
     }
