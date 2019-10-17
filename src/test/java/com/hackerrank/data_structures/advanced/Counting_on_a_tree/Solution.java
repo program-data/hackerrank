@@ -17,6 +17,7 @@ public class Solution {
 
     // tree === array[n-1][2]
     private static int[][] buildCompressedMatrix(int[][] tree) {
+        // long t0 = System.nanoTime();
         int n = tree.length + 1;
         TreeMap<Integer, TreeSet<Integer>> map = new TreeMap<>();
         for (int i = 0; i < tree.length; ++i) {
@@ -36,6 +37,7 @@ public class Solution {
         // special unused case, init it for safety only
         matrix[0] = new int[]{};
 
+        // long t1 = System.nanoTime();  System.err.printf("%.3f\n",(t1-t0)*0.000_000_001); // ~0.1c on test #4
         return matrix;
     }
 
@@ -167,18 +169,17 @@ public class Solution {
     // queries === array[k][4]
     static int[] solve(int[] values, int[][] tree, int[][] queries) {
         Solution.matrix = buildCompressedMatrix(tree);
-        matrix[0] = new int[]{};
-        long count = Arrays.stream(matrix).filter(ints -> ints.length > 2).count();
-        boo = new boolean[(int) count][N];
-
         Solution.values = values;
         Solution.N = values.length;
+        // long count = Arrays.stream(matrix).filter(ints -> ints.length > 2).count();
 
         // инициализируем
         cache = new int[N + 1][];
         // нулями
-        for (int i = 0, size = matrix.length; i < size; i++)
-            cache[i] = Solution.matrix[i].length > 1 ? new int[N + 1] : new int[0];
+        for (int i = 0, size = matrix.length; i < size; i++) {
+            // System.err.println(i);
+            cache[i] = true && Solution.matrix[i].length > 1 ? new int[N + 1] : new int[0];
+        }
 
 
         int[] result = new int[queries.length];
