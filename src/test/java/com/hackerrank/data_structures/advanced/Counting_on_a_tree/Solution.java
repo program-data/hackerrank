@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 /**
  * @author michael.malevannyy@gmail.com, 10.10.2019
  */
-@SuppressWarnings("WeakerAccess")
 public class Solution {
     // Complete the solve function below.
 
@@ -40,6 +39,31 @@ public class Solution {
 
         // long t1 = System.nanoTime();  System.err.printf("%.3f\n",(t1-t0)*0.000_000_001); // ~0.1c on test #4
         return matrix;
+    }
+
+    // 3 пиешм хвосты в карту на основе индексов массива: элементв хвоста -> узел ядра
+    private static void writeTailToMap(int n) {
+        // потенцияльно это можно заменить огромным переиспользуемым буфером потом скопировать только заполненную часть, может оказаться быстрее
+        // TODO refactor .contains() to n-2
+        List<Integer> list = new ArrayList<>(12);
+        for (int[] peer = Solution.matrix[n]; peer.length < 3; n = !list.contains(peer[0]) ? peer[0] : peer[1], peer = Solution.matrix[n]) {
+            list.add(n);
+        }
+        // sux
+        int[] tail = list.stream().mapToInt(i -> i).toArray();
+
+        // 3 пиешм хвосты в карту хвост -> ядро
+        for (int t : tail) {
+            // индетивицируем хвост его краем.
+            tailIdentifier[t] = tail[0];
+            // и это тоже
+            tailCore[t] = n;
+            // и так
+            core.add(n);
+        }
+
+        // пишем весь хвост в его порядке в крту хвостов
+        tailMap.put(tail[0], tail);
     }
 
     // tests ok
@@ -97,19 +121,25 @@ public class Solution {
     private static int N;
     private static int[] values;
     private static int[][] matrix;
-    // комутатор, карта *хвост -> ядро сети
-    private static int[] tailToCoreMap;
-    // выбор выходя из ядра
-    private static int[] exitRouter;
-    // мегакоммутатор хвостовы вылета, пока карта
-    static Map<Integer, Map<Integer, int[]>> map = new TreeMap<>();
+    // комутатор, *хвост -> иднетификатор хвоста  (по его кончику)
+    private static int[] tailIdentifier;
+    // коммутатор *хвост -> ядро сети
+    private static int[] tailCore;
+    // карта хвостов
+    // https://stackoverflow.com/questions/7057430/treemap-or-hashmap-faster
+    // https://avaldes.com/wp-content/uploads/2014/11/MapPerformance.png
+    private static HashMap<Integer, int[]> tailMap = new HashMap<>();
+    // колекция узлов ядра
+    private static HashSet<Integer> core = new HashSet<>();
+    // Ядро из одного узлв
+    private static int singleCoreNode = 0;
 
     // queries === array[k][4]
     static int[] solve(int[] values, int[][] tree, int[][] queries) {
         Solution.N = values.length;
         Solution.values = values;
-        tailToCoreMap = new int[N + 1];
-        exitRouter = new int[N+1];
+        tailIdentifier = new int[N + 1];
+        tailCore = new int[N + 1];
         // 1
         Solution.matrix = buildCompressedMatrix(tree);
 
@@ -117,9 +147,18 @@ public class Solution {
         for (int i = 1, size = matrix.length; i < size; i++) {
             int[] peer = Solution.matrix[i];
             if (peer.length == 1) {
-                writeTail(i);
+                writeTailToMap(i);
             }
         }
+
+        // частный кейс
+        if(core.size() == 1) {
+            singleCoreNode = core.stream().findFirst().get();
+        }
+
+
+        // 3 из ядерных узлов, это те что не хвосты один раз строим дерево по которому будет ходить потом искалка маршрутов
+
 
         int[] result = new int[queries.length];
         for (int i = 0; i < queries.length; i++) {
@@ -132,79 +171,56 @@ public class Solution {
         return result;
     }
 
-    // 3 пиешм хвосты в карту хвост -> ядро
-    // 5 собранные хвосты разворачиваем головй вперед и складываем в коммутоатор вылетов
-    private static void writeTail(int n) {
-        List<Integer> list = new ArrayList<>(12);
-        // TODO refactor .contains()
-        for (int[] peer = Solution.matrix[n]; peer.length < 3; n = !list.contains(peer[0]) ? peer[0] : peer[1], peer = Solution.matrix[n]) {
-            list.add(n);
-        }
-        // головой вперед
-        Collections.reverse(list);
-        // sux
-        int[] tail = list.stream().mapToInt(i -> i).toArray();
-
-        // 3 пиешм хвосты в карту хвост -> ядро
-        for (int t : tail) {
-            tailToCoreMap[t] = tail[0];
-            exitRouter[t] = tail[0];
-        }
-
-        // 5 складываем в мега коммутоатор вылетов
-        Map<Integer, int[]> exit = map.get(n);
-        if (exit != null) {
-            exit.put(tail[0], tail);
+    private static int[] getPath(int src, int dst) {
+        // понять расположение src, dst ибо возожны варианты:
+        // оба в одном хвосте
+        // оба в разных хвостах, оба в ядре тогда мдентификаторы хвостов === 0, один в ядре другой нет
+        int srcTailID = tailIdentifier[src];
+        int dstTailID = tailIdentifier[dst];
+        if (srcTailID == dstTailID && srcTailID != 0 /*&& dstTailID != 0*/) {
+            return getSingleTailPath(src, dst, tailMap.get(srcTailID));
         }
         else {
-            exit = new TreeMap<>();
-            exit.put(tail[0], tail);
-            map.put(n, exit);
+            // возможен пустой массив
+            int[] srcTailPath = srcTailID > 0 ? getTailToCorePath(src, tailMap.get(srcTailID)) : new int[]{};
+            int[] dstTailPath = dstTailID > 0 ? getTailToCorePath(dst, tailMap.get(dstTailID)) : new int[]{};
+            // точка вход в ядро
+            int srcCore = srcTailID > 0 ? tailCore[srcTailID] : src;
+            int dstCore = dstTailID > 0 ? tailCore[dstTailID] : src;
+            int[] corePath = getCorePath(srcCore, dstCore);
+
+            int[] result = new int[srcTailPath.length + corePath.length + dstTailPath.length];
+            System.arraycopy(srcTailPath, 0, result, 0, srcTailPath.length);
+            System.arraycopy(corePath, 0,    result, srcTailPath.length, corePath.length);
+            System.arraycopy(dstTailPath, 0, result, srcTailPath.length + corePath.length, dstTailPath.length);
+            return result;
         }
     }
 
-    private static int[] getPath(int src, int dst) {
-        List<Integer> path = new ArrayList<>();
-
-        // понять расположение src, dst ибо возожно что:
-        // оба в ядре тогда точки входа будут == 0
-        // оба в одном хвосте тогда у них будет одинаковая точка входа
-
-        // хвосты ростить надо тоже одновременно, это позволит избавиться от мегакоммутатора вылета и выходных хвостов!
-        // более того порядок в пути не имеет никакого смясла, можно просто валить кучей ибо потом будет сортится по значениям
-
-
-
-        // хвост входа, однако мы можем попасть и не в хвост а сразу в ядро
-        // на вызходе из цикла там будет точка вход в ядро
-        int srcCore = src;
-        for (int[] peer = Solution.matrix[srcCore]; peer.length < 3; srcCore = !path.contains(peer[0]) ? peer[0] : peer[1], peer = Solution.matrix[srcCore]) {
-            path.add(srcCore);
-
-            // можем всё решить хвостом
-            if(srcCore == dst)
-                break;
+    private static int[] getCorePath(int src, int dst) {
+        if(core.size() == 1) {
+            return new int[]{singleCoreNode};
         }
 
-        if(srcCore != dst) {
-            // целевая точка выхода из ядра , межет быть 0 т.е. выходная точка внутри ядра
-            int dstCore = tailToCoreMap[dst];
+        return new int[]{};
+    }
 
-            // TODO путь по ядру
+    // c ообоих хвостового конца до головы хвоста включительно
+    private static int[] getTailToCorePath(int src, int[] tail) {
+        int i;
+        for (i = 0; i < tail.length; ++i) if (tail[i] == src) break;
+        int[] range = Arrays.copyOfRange(tail, i, tail.length);
+        return range;
+    }
 
-            // выходной хвост
-            if (dstCore != 0) {
+    // c ообоих концов одновременно i <= j by design
+    private static int[] getSingleTailPath(int src, int dst, int[] tail) {
+        int i, j;
+        for (i = 0; i < tail.length; ++i) if (tail[i] == src || tail[i] == dst) break;
+        for (j = tail.length - 1; j >= 0; --j) if (tail[j] == src || tail[j] == dst) break;
 
-                Map<Integer, int[]> exitMap = map.get(dstCore);
-
-                int[] tail = exitMap.get(exitRouter[dst]);
-                // хвост вылета
-                for (int i = 0, size = tail.length; i < size; i++) path.add(tail[i]);
-            }
-
-        }
-
-        return path.stream().mapToInt(i -> i).toArray();
+        int[] range = Arrays.copyOfRange(tail, i, j + 1);
+        return range;
     }
 
     /// UNTIL HERE
