@@ -59,7 +59,7 @@ public class Solution {
             // и это тоже
             tailCore[t] = n;
             // и так
-            core.add(n);
+            corePerimeter.add(n);
         }
 
         // пишем весь хвост в его порядке в крту хвостов
@@ -120,7 +120,7 @@ public class Solution {
     // compressed direction matrix
     private static int N;
     private static int[] values;
-    private static int[][] matrix;
+    static int[][] matrix;
     // комутатор, *хвост -> иднетификатор хвоста  (по его кончику)
     private static int[] tailIdentifier;
     // коммутатор *хвост -> ядро сети
@@ -129,8 +129,8 @@ public class Solution {
     // https://stackoverflow.com/questions/7057430/treemap-or-hashmap-faster
     // https://avaldes.com/wp-content/uploads/2014/11/MapPerformance.png
     private static HashMap<Integer, int[]> tailMap = new HashMap<>();
-    // колекция узлов ядра
-    private static HashSet<Integer> core = new HashSet<>();
+    // периметр ядра (узлы держатели хвостов)
+    private static HashSet<Integer> corePerimeter = new HashSet<>();
     // Ядро из одного узлв
     private static int singleCoreNode = 0;
 
@@ -152,13 +152,12 @@ public class Solution {
         }
 
         // частный кейс
-        if(core.size() == 1) {
-            singleCoreNode = core.stream().findFirst().get();
+        if(corePerimeter.size() == 1) {
+            singleCoreNode = corePerimeter.stream().findFirst().get();
         }
 
-
-        // 3 из ядерных узлов, это те что не хвосты один раз строим дерево по которому будет ходить потом искалка маршрутов
-
+        // из разрозненных узлов ядра строим дерево
+        buildCore();
 
         int[] result = new int[queries.length];
         for (int i = 0; i < queries.length; i++) {
@@ -169,6 +168,20 @@ public class Solution {
         }
 
         return result;
+    }
+
+    private static Node root = null;
+
+    private static void buildCore() {
+        if(corePerimeter.size() == 1)
+            root = Node.of(corePerimeter.stream().findFirst().get());
+
+        // строим снизу вверх
+        for (Integer x : corePerimeter) {
+            Node node = Node.of(x);
+
+        }
+
     }
 
     private static int[] getPath(int src, int dst) {
@@ -198,7 +211,7 @@ public class Solution {
     }
 
     private static int[] getCorePath(int src, int dst) {
-        if(core.size() == 1) {
+        if(corePerimeter.size() == 1) {
             return new int[]{singleCoreNode};
         }
 
