@@ -9,16 +9,17 @@ import java.util.HashSet;
 
 public class Node {
     public final int n;
-    public final int[] peer;
     public Node parent;
-    public int free;
     public HashSet<Integer> freePeers = new HashSet<>();
 
     private Node(int n) {
         this.n = n;
-        this.peer = Solution.matrix[n];
+
+        int[] peer = Solution.matrix[n];
+        HashSet<Integer> exits = Solution.coreExitMap.get(n);
         for (int x : peer) {
-            freePeers.add(x);
+            if(exits == null || !exits.contains(x))
+                freePeers.add(x);
         }
     }
 
@@ -33,5 +34,15 @@ public class Node {
     }
 
     // можно заменить массивом Node[N+1]
-    private static HashMap<Integer, Node> map = new HashMap<>();
+    static HashMap<Integer, Node> map = new HashMap<>();
+
+    void setParent(Node parent) {
+        this.parent = parent;
+    }
+
+    @Override
+    public String toString() {
+        // return String.valueOf(n);
+        return String.format("%d -> %s", n, parent!=null ? parent.n : "null");
+    }
 }

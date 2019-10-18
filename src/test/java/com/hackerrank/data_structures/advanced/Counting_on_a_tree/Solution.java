@@ -2,7 +2,6 @@ package com.hackerrank.data_structures.advanced.Counting_on_a_tree;
 
 import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.io.*;
@@ -14,7 +13,6 @@ import java.util.stream.Collectors;
  */
 public class Solution {
     // Complete the solve function below.
-
     // tree === array[n-1][2]
     private static int[][] buildCompressedMatrix(int[][] tree) {
         // long t0 = System.nanoTime();
@@ -60,6 +58,12 @@ public class Solution {
             tailCore[t] = n;
             // и так
             corePerimeter.add(n);
+            // и еще карту вылетов
+
+            int e = tail[tail.length - 1];
+            HashSet<Integer> exists = coreExitMap.putIfAbsent(n, new HashSet<>(Collections.singletonList(e)));
+            if (exists != null)
+                exists.add(e);
         }
 
         // пишем весь хвост в его порядке в крту хвостов
@@ -131,6 +135,8 @@ public class Solution {
     private static HashMap<Integer, int[]> tailMap = new HashMap<>();
     // периметр ядра (узлы держатели хвостов)
     private static HashSet<Integer> corePerimeter = new HashSet<>();
+    // крата вылетов из ядра
+    public static HashMap<Integer, HashSet<Integer>> coreExitMap = new HashMap<>();
     // Ядро из одного узлв
     private static int singleCoreNode = 0;
 
@@ -152,7 +158,7 @@ public class Solution {
         }
 
         // частный кейс
-        if(corePerimeter.size() == 1) {
+        if (corePerimeter.size() == 1) {
             singleCoreNode = corePerimeter.stream().findFirst().get();
         }
 
@@ -173,21 +179,42 @@ public class Solution {
     private static Node root = null;
 
     private static void buildCore() {
-        if(corePerimeter.size() == 1)
+        if (corePerimeter.size() == 1)
             root = Node.of(corePerimeter.stream().findFirst().get());
 
         // строим снизу вверх
-        for (Integer x : corePerimeter) {
-            Node node = Node.of(x);
+        HashSet<Integer> level;
+        for (level = corePerimeter; level.size() > 1; /* BEWARE */) {
 
+            HashSet<Integer> next = new HashSet<>();
+
+            for (Integer n : level) {
+                Node node = Node.of(n);
+                HashSet<Integer> freePeers = node.freePeers;
+                if (freePeers.size() == 1) {
+                    for (Integer pn : freePeers) {
+                        Node parent = Node.of(pn);
+                        // dual side link
+                        node.setParent(parent);
+                        parent.freePeers.remove(node.n);
+                        // build new level
+                        next.add(pn);
+                        break;
+                    }
+                }
+            }
+
+            level = next;
         }
 
+        //noinspection OptionalGetWithoutIsPresent
+        root = Node.of(level.stream().findFirst().get());
     }
 
     private static int[] getPath(int src, int dst) {
         // понять расположение src, dst ибо возожны варианты:
         // оба в одном хвосте
-        // оба в разных хвостах, оба в ядре тогда мдентификаторы хвостов === 0, один в ядре другой нет
+        // оба в разных хвостах, оба в ядре тогда идентификаторы хвостов === 0, один в ядре другой нет
         int srcTailID = tailIdentifier[src];
         int dstTailID = tailIdentifier[dst];
         if (srcTailID == dstTailID && srcTailID != 0 /*&& dstTailID != 0*/) {
@@ -199,23 +226,53 @@ public class Solution {
             int[] dstTailPath = dstTailID > 0 ? getTailToCorePath(dst, tailMap.get(dstTailID)) : new int[]{};
             // точка вход в ядро
             int srcCore = srcTailID > 0 ? tailCore[srcTailID] : src;
-            int dstCore = dstTailID > 0 ? tailCore[dstTailID] : src;
+            int dstCore = dstTailID > 0 ? tailCore[dstTailID] : dst;
             int[] corePath = getCorePath(srcCore, dstCore);
 
             int[] result = new int[srcTailPath.length + corePath.length + dstTailPath.length];
             System.arraycopy(srcTailPath, 0, result, 0, srcTailPath.length);
-            System.arraycopy(corePath, 0,    result, srcTailPath.length, corePath.length);
+            System.arraycopy(corePath, 0, result, srcTailPath.length, corePath.length);
             System.arraycopy(dstTailPath, 0, result, srcTailPath.length + corePath.length, dstTailPath.length);
             return result;
         }
     }
 
     private static int[] getCorePath(int src, int dst) {
-        if(corePerimeter.size() == 1) {
+        if (src == dst) {
+            return new int[]{src};
+        }
+        else if (corePerimeter.size() == 1) {
             return new int[]{singleCoreNode};
         }
+        else if (corePerimeter.size() == 2) {
+            return new int[]{src, dst};
+        }
+        else {
+            List<Integer> srcList = new ArrayList<>(24);
+            List<Integer> dstList = new ArrayList<>(24);
 
-        return new int[]{};
+            Node srcNode = Node.of(src);
+            Node dstNode = Node.of(dst);
+
+            for (; ; ) {
+                if (srcNode == dstNode) break;
+                srcList.add(srcNode.n);
+                if (srcNode.parent != null)
+                    srcNode = srcNode.parent;
+
+                if (srcNode == dstNode) break;
+                dstList.add(dstNode.n);
+                if (dstNode.parent != null)
+                    dstNode = dstNode.parent;
+            }
+
+            Collections.reverse(dstList);
+            srcList.addAll(dstList);
+
+            int[] result = srcList.stream().distinct().mapToInt(x -> x).toArray();
+
+            return result;
+        }
     }
 
     // c ообоих хвостового конца до головы хвоста включительно
@@ -236,139 +293,84 @@ public class Solution {
         return range;
     }
 
-    /// UNTIL HERE
-
-    private static final Scanner scanner = new Scanner(System.in);
-
     public static void main(String[] args) throws IOException {
-        BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter("c:/temp/OUTPUT_PATH.txt"));
+        final Scanner scanner = new Scanner(System.in);
+        final BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(System.getenv("OUTPUT_PATH")));
+        //final BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter("c:/temp/OUTPUT_PATH.txt"));
 
-        String[] nq = scanner.nextLine().split(" ");
-
-        int n = Integer.parseInt(nq[0]);
-
-        int q = Integer.parseInt(nq[1]);
-
-        int[] c = new int[n];
-
-        String[] cItems = scanner.nextLine().split(" ");
-        scanner.skip("(\r\n|[\n\r\u2028\u2029\u0085])?");
-
-        for (int cItr = 0; cItr < n; cItr++) {
-            int cItem = Integer.parseInt(cItems[cItr]);
-            c[cItr] = cItem;
+        int n = scanner.nextInt();
+        int q = scanner.nextInt();
+        int[] values = new int[n];
+        for (int i = 0; i < n; ++i) {
+            values[i] = scanner.nextInt();
         }
-
         int[][] tree = new int[n - 1][2];
-
-        for (int treeRowItr = 0; treeRowItr < n - 1; treeRowItr++) {
-            String[] treeRowItems = scanner.nextLine().split(" ");
-            scanner.skip("(\r\n|[\n\r\u2028\u2029\u0085])?");
-
-            for (int treeColumnItr = 0; treeColumnItr < 2; treeColumnItr++) {
-                int treeItem = Integer.parseInt(treeRowItems[treeColumnItr]);
-                tree[treeRowItr][treeColumnItr] = treeItem;
-            }
+        for (int i = 0; i < n - 1; ++i) {
+            tree[i][0] = scanner.nextInt();
+            tree[i][1] = scanner.nextInt();
         }
-
         int[][] queries = new int[q][4];
-
-        for (int queriesRowItr = 0; queriesRowItr < q; queriesRowItr++) {
-            String[] queriesRowItems = scanner.nextLine().split(" ");
-            scanner.skip("(\r\n|[\n\r\u2028\u2029\u0085])?");
-
-            for (int queriesColumnItr = 0; queriesColumnItr < 4; queriesColumnItr++) {
-                int queriesItem = Integer.parseInt(queriesRowItems[queriesColumnItr]);
-                queries[queriesRowItr][queriesColumnItr] = queriesItem;
-            }
+        for (int i = 0; i < q; ++i) {
+            queries[i][0] = scanner.nextInt();
+            queries[i][1] = scanner.nextInt();
+            queries[i][2] = scanner.nextInt();
+            queries[i][3] = scanner.nextInt();
         }
 
-        int[] result = solve(c, tree, queries);
+        int[] result = solve(values, tree, queries);
 
-        for (int resultItr = 0; resultItr < result.length; resultItr++) {
-            bufferedWriter.write(String.valueOf(result[resultItr]));
-
-            if (resultItr != result.length - 1) {
-                bufferedWriter.write("\n");
-            }
+        for (int i : result) {
+            bufferedWriter.write(String.valueOf(i));
+            bufferedWriter.newLine();
         }
-
-        bufferedWriter.newLine();
-
         bufferedWriter.close();
-
         scanner.close();
     }
 
     public Object[] load(String path) throws FileNotFoundException {
         Scanner scanner = new Scanner(new File(path)).useLocale(Locale.US);
-
-        String[] nq = scanner.nextLine().split(" ");
-
-        int n = Integer.parseInt(nq[0]);
-
-        int q = Integer.parseInt(nq[1]);
-
-        int[] c = new int[n];
-
-        String[] cItems = scanner.nextLine().split(" ");
-        scanner.skip("(\r\n|[\n\r\u2028\u2029\u0085])?");
-
-        for (int cItr = 0; cItr < n; cItr++) {
-            int cItem = Integer.parseInt(cItems[cItr]);
-            c[cItr] = cItem;
+        int n = scanner.nextInt();
+        int q = scanner.nextInt();
+        int[] values = new int[n];
+        for (int i = 0; i < n; ++i) {
+            values[i] = scanner.nextInt();
         }
-
         int[][] tree = new int[n - 1][2];
-
-        for (int treeRowItr = 0; treeRowItr < n - 1; treeRowItr++) {
-            String[] treeRowItems = scanner.nextLine().split(" ");
-            scanner.skip("(\r\n|[\n\r\u2028\u2029\u0085])?");
-
-            for (int treeColumnItr = 0; treeColumnItr < 2; treeColumnItr++) {
-                int treeItem = Integer.parseInt(treeRowItems[treeColumnItr]);
-                tree[treeRowItr][treeColumnItr] = treeItem;
-            }
+        for (int i = 0; i < n - 1; ++i) {
+            tree[i][0] = scanner.nextInt();
+            tree[i][1] = scanner.nextInt();
         }
-
         int[][] queries = new int[q][4];
-
-        for (int queriesRowItr = 0; queriesRowItr < q; queriesRowItr++) {
-            String[] queriesRowItems = scanner.nextLine().split(" ");
-            scanner.skip("(\r\n|[\n\r\u2028\u2029\u0085])?");
-
-            for (int queriesColumnItr = 0; queriesColumnItr < 4; queriesColumnItr++) {
-                int queriesItem = Integer.parseInt(queriesRowItems[queriesColumnItr]);
-                queries[queriesRowItr][queriesColumnItr] = queriesItem;
-            }
+        for (int i = 0; i < q; ++i) {
+            queries[i][0] = scanner.nextInt();
+            queries[i][1] = scanner.nextInt();
+            queries[i][2] = scanner.nextInt();
+            queries[i][3] = scanner.nextInt();
         }
 
-        return new Object[]{c, tree, queries};
+        return new Object[]{values, tree, queries};
     }
 
-    private int[] c;
-    private int[][] tree;
-    private int[][] queries;
-    private int[] solution;
-    private int[] answer;
-
-    @Before // ~13-16 cек
-    public void before() throws FileNotFoundException {
-        int n = 0;
-        Object[] objects = load(String.format("D:/hackerrank/src/test/java/com/hackerrank/data_structures/advanced/Counting_on_a_tree/input%02d.txt", n));
-        c = (int[]) objects[0];
-        tree = (int[][]) objects[1];
-        queries = (int[][]) objects[2];
-        answer = loadAnswer(String.format("D:/hackerrank/src/test/java/com/hackerrank/data_structures/advanced/Counting_on_a_tree/output%02d.txt", n));
-    }
+    // TEST CASE
+    private static final int TEST_CASE = 4;
 
     @Test//(timeout = 15_000)
-    public void test() {
-        solution = solve(c, tree, queries);
+    public void test() throws FileNotFoundException {
+        long t0 = System.nanoTime();
+        Object[] objects = load(String.format("D:/hackerrank/src/test/java/com/hackerrank/data_structures/advanced/Counting_on_a_tree/input%02d.txt", TEST_CASE));
+        int[] values = (int[]) objects[0];
+        int[][] tree = (int[][]) objects[1];
+        int[][] queries = (int[][]) objects[2];
+        solution = solve(values, tree, queries);
+        long t1 = System.nanoTime();
+        System.err.printf("%.3f\n", (t1 - t0) * 0.000_000_001);
     }
 
+    private int[] solution;
+
     @After
-    public void after() {
+    public void after() throws FileNotFoundException {
+        int[] answer = loadAnswer(String.format("D:/hackerrank/src/test/java/com/hackerrank/data_structures/advanced/Counting_on_a_tree/output%02d.txt", TEST_CASE));
         Assert.assertArrayEquals(answer, solution);
     }
 
