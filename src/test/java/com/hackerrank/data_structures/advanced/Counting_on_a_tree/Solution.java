@@ -176,11 +176,9 @@ public class Solution {
         return result;
     }
 
-    private static Node root = null;
-
     private static void buildCore() {
         if (corePerimeter.size() == 1)
-            root = Node.of(corePerimeter.stream().findFirst().get());
+            return;
 
         // строим снизу вверх
         HashSet<Integer> level;
@@ -206,9 +204,6 @@ public class Solution {
 
             level = next;
         }
-
-        //noinspection OptionalGetWithoutIsPresent
-        root = Node.of(level.stream().findFirst().get());
     }
 
     private static int[] getPath(int src, int dst) {
@@ -248,28 +243,27 @@ public class Solution {
             return new int[]{src, dst};
         }
         else {
-            List<Integer> srcList = new ArrayList<>(24);
-            List<Integer> dstList = new ArrayList<>(24);
+            LinkedList<Node> srcList = new LinkedList<>();
+            LinkedList<Node> dstList = new LinkedList<>();
 
-            Node srcNode = Node.of(src);
-            Node dstNode = Node.of(dst);
+            for (Node n = Node.of(src); n != null; n = n.parent)
+                srcList.add(n);
 
-            for (; ; ) {
-                if (srcNode == dstNode) break;
-                srcList.add(srcNode.n);
-                if (srcNode.parent != null)
-                    srcNode = srcNode.parent;
+            for (Node n = Node.of(dst); n != null; n = n.parent)
+                dstList.add(n);
 
-                if (srcNode == dstNode) break;
-                dstList.add(dstNode.n);
-                if (dstNode.parent != null)
-                    dstNode = dstNode.parent;
+            Node common = null;
+            for(;!srcList.isEmpty() && !dstList.isEmpty() && srcList.getLast() == dstList.getLast();) {
+                common = srcList.getLast();
+                srcList.removeLast();
+                dstList.removeLast();
             }
 
+            srcList.add(common);
             Collections.reverse(dstList);
             srcList.addAll(dstList);
 
-            int[] result = srcList.stream().distinct().mapToInt(x -> x).toArray();
+            int[] result = srcList.stream().mapToInt(node -> node.n).toArray();
 
             return result;
         }
