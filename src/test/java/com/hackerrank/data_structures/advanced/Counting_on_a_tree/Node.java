@@ -23,6 +23,7 @@ public class Node {
         }
     }
 
+
     // registry
     public static Node of(int n) {
         Node node = map.get(n);

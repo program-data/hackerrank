@@ -321,6 +321,7 @@ public class Solution {
         scanner.close();
     }
 
+
     public Object[] load(String path) throws FileNotFoundException {
         Scanner scanner = new Scanner(new File(path)).useLocale(Locale.US);
         int n = scanner.nextInt();
