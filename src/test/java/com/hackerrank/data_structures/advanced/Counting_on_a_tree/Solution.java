@@ -1,9 +1,5 @@
 package com.hackerrank.data_structures.advanced.Counting_on_a_tree;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -11,64 +7,64 @@ import java.util.stream.Collectors;
 /**
  * @author michael.malevannyy@gmail.com, 10.10.2019
  */
+@SuppressWarnings("ForLoopReplaceableByForEach")
 public class Solution {
     // Complete the solve function below.
     // tree === array[n-1][2]
-    private static int[][] buildCompressedMatrix(int[][] tree) {
-        // long t0 = System.nanoTime();
-        int n = tree.length + 1;
-        TreeMap<Integer, TreeSet<Integer>> map = new TreeMap<>();
-        for (int i = 0; i < tree.length; ++i) {
-            int u = tree[i][0];
-            int v = tree[i][1];
-            map.computeIfAbsent(u, k -> new TreeSet<>()).add(v);
-            map.computeIfAbsent(v, k -> new TreeSet<>()).add(u);
-        }
-
-        int[][] matrix = new int[n + 1][];
-        for (Map.Entry<Integer, TreeSet<Integer>> entry : map.entrySet()) {
-            int src = entry.getKey();
-            int[] dst = entry.getValue().stream().mapToInt(value -> value).toArray();
-            matrix[src] = dst;
-        }
-
-        // special unused case, init it for safety only
-        matrix[0] = new int[]{};
-
-        // long t1 = System.nanoTime();  System.err.printf("%.3f\n",(t1-t0)*0.000_000_001); // ~0.1c on test #4
-        return matrix;
-    }
+    // private static int[][] buildCompressedMatrix(int[][] tree) {
+    //     // long t0 = System.nanoTime();
+    //     int n = tree.length + 1;
+    //     TreeMap<Integer, TreeSet<Integer>> map = new TreeMap<>();
+    //     for (int i = 0; i < tree.length; ++i) {
+    //         int u = tree[i][0];
+    //         int v = tree[i][1];
+    //         map.computeIfAbsent(u, k -> new TreeSet<>()).add(v);
+    //         map.computeIfAbsent(v, k -> new TreeSet<>()).add(u);
+    //     }
+    //
+    //     int[][] matrix = new int[n + 1][];
+    //     for (Map.Entry<Integer, TreeSet<Integer>> entry : map.entrySet()) {
+    //         int src = entry.getKey();
+    //         int[] dst = entry.getValue().stream().mapToInt(value -> value).toArray();
+    //         matrix[src] = dst;
+    //     }
+    //
+    //     // special unused case, init it for safety only
+    //     matrix[0] = new int[]{};
+    //
+    //     // long t1 = System.nanoTime();  System.err.printf("%.3f\n",(t1-t0)*0.000_000_001); // ~0.1c on test #4
+    //     return matrix;
+    // }
 
     // 3 пиешм хвосты в карту на основе индексов массива: элементв хвоста -> узел ядра
-    private static void writeTailToMap(int n) {
-        // потенцияльно это можно заменить огромным переиспользуемым буфером потом скопировать только заполненную часть, может оказаться быстрее
-        // TODO refactor .contains() to n-2
-        List<Integer> list = new ArrayList<>(12);
-        for (int[] peer = Solution.matrix[n]; peer.length < 3; n = !list.contains(peer[0]) ? peer[0] : peer[1], peer = Solution.matrix[n]) {
-            list.add(n);
-        }
-        // sux
-        int[] tail = list.stream().mapToInt(i -> i).toArray();
-
-        // 3 пиешм хвосты в карту хвост -> ядро
-        for (int t : tail) {
-            // индетивицируем хвост его краем.
-            tailIdentifier[t] = tail[0];
-            // и это тоже
-            tailCore[t] = n;
-            // и так
-            corePerimeter.add(n);
-            // и еще карту вылетов
-
-            int e = tail[tail.length - 1];
-            HashSet<Integer> exists = coreExitMap.putIfAbsent(n, new HashSet<>(Collections.singletonList(e)));
-            if (exists != null)
-                exists.add(e);
-        }
-
-        // пишем весь хвост в его порядке в крту хвостов
-        tailMap.put(tail[0], tail);
-    }
+    // private static void writeTailToMap(int n) {
+    //     // потенцияльно это можно заменить огромным переиспользуемым буфером потом скопировать только заполненную часть, может оказаться быстрее
+    //     List<Integer> list = new ArrayList<>(12);
+    //     for (int[] peer = Solution.matrix[n]; peer.length < 3; n = !list.contains(peer[0]) ? peer[0] : peer[1], peer = Solution.matrix[n]) {
+    //         list.add(n);
+    //     }
+    //     // sux
+    //     int[] tail = list.stream().mapToInt(i -> i).toArray();
+    //
+    //     // 3 пиешм хвосты в карту хвост -> ядро
+    //     for (int t : tail) {
+    //         // индетивицируем хвост его краем.
+    //         tailIdentifier[t] = tail[0];
+    //         // и это тоже
+    //         tailCore[t] = n;
+    //         // и так
+    //         corePerimeter.add(n);
+    //         // и еще карту вылетов
+    //
+    //         int e = tail[tail.length - 1];
+    //         HashSet<Integer> exists = exitMap.putIfAbsent(n, new HashSet<>(Collections.singletonList(e)));
+    //         if (exists != null)
+    //             exists.add(e);
+    //     }
+    //
+    //     // пишем весь хвост в его порядке в крту хвостов
+    //     tailMap.put(tail[0], tail);
+    // }
 
     // tests ok
     private static int count(int[] path1, int[] path2) {
@@ -121,49 +117,25 @@ public class Solution {
         return k;
     }
 
-    // compressed direction matrix
+    // task size
     private static int N;
+    // values
     private static int[] values;
-    static int[][] matrix;
     // комутатор, *хвост -> иднетификатор хвоста  (по его кончику)
     private static int[] tailIdentifier;
     // коммутатор *хвост -> ядро сети
     private static int[] tailCore;
     // карта хвостов
-    // https://stackoverflow.com/questions/7057430/treemap-or-hashmap-faster
-    // https://avaldes.com/wp-content/uploads/2014/11/MapPerformance.png
     private static HashMap<Integer, int[]> tailMap = new HashMap<>();
     // периметр ядра (узлы держатели хвостов)
     private static HashSet<Integer> corePerimeter = new HashSet<>();
-    // крата вылетов из ядра
-    public static HashMap<Integer, HashSet<Integer>> coreExitMap = new HashMap<>();
-    // Ядро из одного узлв
-    private static int singleCoreNode = 0;
 
-    // queries === array[k][4]
+    // update: tree given ordered [parent -> slave]
     static int[] solve(int[] values, int[][] tree, int[][] queries) {
         Solution.N = values.length;
         Solution.values = values;
-        tailIdentifier = new int[N + 1];
-        tailCore = new int[N + 1];
-        // 1
-        Solution.matrix = buildCompressedMatrix(tree);
 
-        // 2 фильтруем и отбираем только с 1 соседом = концы хвостов
-        for (int i = 1, size = matrix.length; i < size; i++) {
-            int[] peer = Solution.matrix[i];
-            if (peer.length == 1) {
-                writeTailToMap(i);
-            }
-        }
-
-        // частный кейс
-        if (corePerimeter.size() == 1) {
-            singleCoreNode = corePerimeter.stream().findFirst().get();
-        }
-
-        // из разрозненных узлов ядра строим дерево
-        buildCore();
+        buildTree(tree);
 
         int[] result = new int[queries.length];
         for (int i = 0; i < queries.length; i++) {
@@ -176,35 +148,86 @@ public class Solution {
         return result;
     }
 
-    private static void buildCore() {
-        if (corePerimeter.size() == 1)
-            return;
-
-        // строим снизу вверх
-        HashSet<Integer> level;
-        for (level = corePerimeter; level.size() > 1; /* BEWARE */) {
-
-            HashSet<Integer> next = new HashSet<>();
-
-            for (Integer n : level) {
-                Node node = Node.of(n);
-                HashSet<Integer> freePeers = node.freePeers;
-                if (freePeers.size() == 1) {
-                    for (Integer pn : freePeers) {
-                        Node parent = Node.of(pn);
-                        // dual side link
-                        node.setParent(parent);
-                        parent.freePeers.remove(node.n);
-                        // build new level
-                        next.add(pn);
-                        break;
-                    }
-                }
-            }
-
-            level = next;
+    private static void buildTree(int[][] tree) {
+        // полное дерево
+        for (int i = 0, size = tree.length; i < size; i++) {
+            Node parent = Node.of(tree[i][0]);
+            Node slave = Node.of(tree[i][1]);
+            parent.add(slave);
+            slave.setParent(parent);
         }
+
+        int[] buf = new int[N];
+        tailIdentifier = new int[N + 1];
+        tailCore = new int[N + 1];
+
+        // хвосты
+        for (Node node : Node.map.values()) {
+            if (node.peerQu == 1) {
+                int tailID = node.n;
+                // строим хвост до узла с > 2 пирами
+                // длина хвоста
+                int h = 0;
+                // на вылете там будет ядро или пусто или пасажир особо длинного хваоста
+                Node n;
+                for (n = node; n != null && n.peerQu < 3 && h < N; n = n.parent, ++h) {
+                    int t = n.n;
+                    buf[h] = t;
+                    tailIdentifier[t] = tailID;
+                }
+
+                // хвост
+                int[] tail = new int[h];
+                System.arraycopy(buf, 0, tail, 0, h);
+
+                // *из хвоста -> узел ядра
+                if (n != null && n.peerQu > 2) {
+                    // узел ядра
+                    int core = n.n;
+                    for(int i =0;i< tail.length; ++i)
+                        tailCore[tail[i]] = core;
+                }
+
+                if (n != null) {
+                    corePerimeter.add(n.n);
+                }
+
+                // tailID -> tail
+                tailMap.put(tailID, tail);
+            }
+        }
+
     }
+
+    // private static void buildCore() {
+    //     if (corePerimeter.size() == 1)
+    //         return;
+    //
+    //     // строим снизу вверх
+    //     HashSet<Integer> level;
+    //     for (level = corePerimeter; level.size() > 1; /* BEWARE */) {
+    //
+    //         HashSet<Integer> next = new HashSet<>();
+    //
+    //         for (Integer n : level) {
+    //             Node node = Node.of(n);
+    //             HashSet<Integer> freePeers = node.freePeers;
+    //             if (freePeers.size() == 1) {
+    //                 for (Integer pn : freePeers) {
+    //                     Node parent = Node.of(pn);
+    //                     // dual side link
+    //                     node.setParent(parent);
+    //                     parent.freePeers.remove(node.n);
+    //                     // build new level
+    //                     next.add(pn);
+    //                     break;
+    //                 }
+    //             }
+    //         }
+    //
+    //         level = next;
+    //     }
+    // }
 
     private static int[] getPath(int src, int dst) {
         // понять расположение src, dst ибо возожны варианты:
@@ -237,6 +260,10 @@ public class Solution {
             return new int[]{src};
         }
         else if (corePerimeter.size() == 1) {
+            // крата вылетов из ядра
+            // public static HashMap<Integer, HashSet<Integer>> exitMap = new HashMap<>();
+            // Ядро из одного узлв
+            int singleCoreNode = 0;
             return new int[]{singleCoreNode};
         }
         else if (corePerimeter.size() == 2) {
@@ -253,7 +280,7 @@ public class Solution {
                 dstList.add(n);
 
             Node common = null;
-            for(;!srcList.isEmpty() && !dstList.isEmpty() && srcList.getLast() == dstList.getLast();) {
+            for (; !srcList.isEmpty() && !dstList.isEmpty() && srcList.getLast() == dstList.getLast(); ) {
                 common = srcList.getLast();
                 srcList.removeLast();
                 dstList.removeLast();
@@ -321,61 +348,42 @@ public class Solution {
         scanner.close();
     }
 
+    static class Node {
+        final int n;
+        Node parent;
+        int peerQu = 0;
 
-    public Object[] load(String path) throws FileNotFoundException {
-        Scanner scanner = new Scanner(new File(path)).useLocale(Locale.US);
-        int n = scanner.nextInt();
-        int q = scanner.nextInt();
-        int[] values = new int[n];
-        for (int i = 0; i < n; ++i) {
-            values[i] = scanner.nextInt();
-        }
-        int[][] tree = new int[n - 1][2];
-        for (int i = 0; i < n - 1; ++i) {
-            tree[i][0] = scanner.nextInt();
-            tree[i][1] = scanner.nextInt();
-        }
-        int[][] queries = new int[q][4];
-        for (int i = 0; i < q; ++i) {
-            queries[i][0] = scanner.nextInt();
-            queries[i][1] = scanner.nextInt();
-            queries[i][2] = scanner.nextInt();
-            queries[i][3] = scanner.nextInt();
+        private Node(int n) {
+            this.n = n;
         }
 
-        return new Object[]{values, tree, queries};
-    }
+        // registry
+        static Node of(int n) {
+            Node node = map.get(n);
+            if (node == null) {
+                node = new Node(n);
+                map.put(n, node);
+            }
+            return node;
+        }
 
-    // TEST CASE
-    private static final int TEST_CASE = 4;
+        // можно заменить массивом Node[N+1]
+        private static HashMap<Integer, Node> map = new HashMap<>();
 
-    @Test//(timeout = 15_000)
-    public void test() throws FileNotFoundException {
-        long t0 = System.nanoTime();
-        Object[] objects = load(String.format("D:/hackerrank/src/test/java/com/hackerrank/data_structures/advanced/Counting_on_a_tree/input%02d.txt", TEST_CASE));
-        int[] values = (int[]) objects[0];
-        int[][] tree = (int[][]) objects[1];
-        int[][] queries = (int[][]) objects[2];
-        solution = solve(values, tree, queries);
-        long t1 = System.nanoTime();
-        System.err.printf("%.3f\n", (t1 - t0) * 0.000_000_001);
-    }
+        void setParent(Node parent) {
+            this.parent = parent;
+            ++peerQu;
+        }
 
-    private int[] solution;
+        void add(Node slave) {
+            ++peerQu;
+        }
 
-    @After
-    public void after() throws FileNotFoundException {
-        int[] answer = loadAnswer(String.format("D:/hackerrank/src/test/java/com/hackerrank/data_structures/advanced/Counting_on_a_tree/output%02d.txt", TEST_CASE));
-        Assert.assertArrayEquals(answer, solution);
-    }
+        @Override
+        public String toString() {
+            return String.format("%d -> %s", n, parent != null ? parent.n : "null");
+        }
 
-    private int[] loadAnswer(String path) throws FileNotFoundException {
-        Scanner scanner = new Scanner(new File(path)).useLocale(Locale.US);
-        List<Integer> list = new ArrayList<>();
-        while (scanner.hasNextInt())
-            list.add(scanner.nextInt());
-
-        return list.stream().mapToInt(value -> value).toArray();
     }
 }
 
