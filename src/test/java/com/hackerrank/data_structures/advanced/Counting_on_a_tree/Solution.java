@@ -9,62 +9,6 @@ import java.util.stream.Collectors;
  */
 @SuppressWarnings("ForLoopReplaceableByForEach")
 public class Solution {
-    // Complete the solve function below.
-    // tree === array[n-1][2]
-    // private static int[][] buildCompressedMatrix(int[][] tree) {
-    //     // long t0 = System.nanoTime();
-    //     int n = tree.length + 1;
-    //     TreeMap<Integer, TreeSet<Integer>> map = new TreeMap<>();
-    //     for (int i = 0; i < tree.length; ++i) {
-    //         int u = tree[i][0];
-    //         int v = tree[i][1];
-    //         map.computeIfAbsent(u, k -> new TreeSet<>()).add(v);
-    //         map.computeIfAbsent(v, k -> new TreeSet<>()).add(u);
-    //     }
-    //
-    //     int[][] matrix = new int[n + 1][];
-    //     for (Map.Entry<Integer, TreeSet<Integer>> entry : map.entrySet()) {
-    //         int src = entry.getKey();
-    //         int[] dst = entry.getValue().stream().mapToInt(value -> value).toArray();
-    //         matrix[src] = dst;
-    //     }
-    //
-    //     // special unused case, init it for safety only
-    //     matrix[0] = new int[]{};
-    //
-    //     // long t1 = System.nanoTime();  System.err.printf("%.3f\n",(t1-t0)*0.000_000_001); // ~0.1c on test #4
-    //     return matrix;
-    // }
-
-    // 3 пиешм хвосты в карту на основе индексов массива: элементв хвоста -> узел ядра
-    // private static void writeTailToMap(int n) {
-    //     // потенцияльно это можно заменить огромным переиспользуемым буфером потом скопировать только заполненную часть, может оказаться быстрее
-    //     List<Integer> list = new ArrayList<>(12);
-    //     for (int[] peer = Solution.matrix[n]; peer.length < 3; n = !list.contains(peer[0]) ? peer[0] : peer[1], peer = Solution.matrix[n]) {
-    //         list.add(n);
-    //     }
-    //     // sux
-    //     int[] tail = list.stream().mapToInt(i -> i).toArray();
-    //
-    //     // 3 пиешм хвосты в карту хвост -> ядро
-    //     for (int t : tail) {
-    //         // индетивицируем хвост его краем.
-    //         tailIdentifier[t] = tail[0];
-    //         // и это тоже
-    //         tailCore[t] = n;
-    //         // и так
-    //         corePerimeter.add(n);
-    //         // и еще карту вылетов
-    //
-    //         int e = tail[tail.length - 1];
-    //         HashSet<Integer> exists = exitMap.putIfAbsent(n, new HashSet<>(Collections.singletonList(e)));
-    //         if (exists != null)
-    //             exists.add(e);
-    //     }
-    //
-    //     // пишем весь хвост в его порядке в крту хвостов
-    //     tailMap.put(tail[0], tail);
-    // }
 
     // tests ok
     private static int count(int[] path1, int[] path2) {
@@ -198,36 +142,6 @@ public class Solution {
         }
 
     }
-
-    // private static void buildCore() {
-    //     if (corePerimeter.size() == 1)
-    //         return;
-    //
-    //     // строим снизу вверх
-    //     HashSet<Integer> level;
-    //     for (level = corePerimeter; level.size() > 1; /* BEWARE */) {
-    //
-    //         HashSet<Integer> next = new HashSet<>();
-    //
-    //         for (Integer n : level) {
-    //             Node node = Node.of(n);
-    //             HashSet<Integer> freePeers = node.freePeers;
-    //             if (freePeers.size() == 1) {
-    //                 for (Integer pn : freePeers) {
-    //                     Node parent = Node.of(pn);
-    //                     // dual side link
-    //                     node.setParent(parent);
-    //                     parent.freePeers.remove(node.n);
-    //                     // build new level
-    //                     next.add(pn);
-    //                     break;
-    //                 }
-    //             }
-    //         }
-    //
-    //         level = next;
-    //     }
-    // }
 
     private static int[] getPath(int src, int dst) {
         // понять расположение src, dst ибо возожны варианты:
