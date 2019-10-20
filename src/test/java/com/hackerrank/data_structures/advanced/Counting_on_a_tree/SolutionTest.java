@@ -11,15 +11,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Scanner;
 
-import static org.junit.Assert.*;
-
 /**
  * @author michael.malevannyy@gmail.com, 19.10.2019
  */
 
 public class SolutionTest {
     // TEST CASE #
-    private static final int TEST_CASE = 0;
+    private static final int TEST_CASE = 4;
 
     @Test//(timeout = 15_000)
     public void test() throws FileNotFoundException {

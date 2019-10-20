@@ -151,8 +151,10 @@ public class Solution {
     private static void buildTree(int[][] tree) {
         // полное дерево
         for (int i = 0, size = tree.length; i < size; i++) {
-            Node parent = Node.of(tree[i][0]);
-            Node slave = Node.of(tree[i][1]);
+            Node n1 = Node.of(tree[i][0]);
+            Node n2 = Node.of(tree[i][1]);
+            Node parent = n1.peerQu >= n2.peerQu || n1.n == 1 ? n1 : n2;
+            Node slave = n1.peerQu >= n2.peerQu ? n2 : n1;
             parent.add(slave);
             slave.setParent(parent);
         }
@@ -170,7 +172,7 @@ public class Solution {
                 int h = 0;
                 // на вылете там будет ядро или пусто или пасажир особо длинного хваоста
                 Node n;
-                for (n = node; n != null && n.peerQu < 3 && h < N; n = n.parent, ++h) {
+                for (n = node; n.parent != null && n.peerQu < 3 && h < N; n = n.parent, ++h) {
                     int t = n.n;
                     buf[h] = t;
                     tailIdentifier[t] = tailID;
@@ -181,16 +183,14 @@ public class Solution {
                 System.arraycopy(buf, 0, tail, 0, h);
 
                 // *из хвоста -> узел ядра
-                if (n != null && n.peerQu > 2) {
+                if (n.peerQu > 2) {
                     // узел ядра
                     int core = n.n;
-                    for(int i =0;i< tail.length; ++i)
+                    for (int i = 0; i < tail.length; ++i)
                         tailCore[tail[i]] = core;
                 }
 
-                if (n != null) {
-                    corePerimeter.add(n.n);
-                }
+                corePerimeter.add(n.n);
 
                 // tailID -> tail
                 tailMap.put(tailID, tail);
