@@ -20,35 +20,23 @@ public class Solution {
         short got = 0;
         byte delta = 0;
 
-        int s=0;
-        int[] shot = shots[s];
+        int j = 0;
+        int[] shot = shots[j];
 
-        for (int i = 0; i < N; i++) {
-            if(i<shot[0])
-            {
+        for (int i = 0; i < N; ++i) {
+            int s = shot[0];
+            int e = shot[1];
+
+            if (i < s) {
                 // nop
+            }
+            else if (i >= s && i<e) {
+                ++got;
             }
 
 
-            m[i] = code(got, delta);
+            m[i] = delta << 20 | got;
         }
-
-
-        // // 2-4
-        // for (int j = 0; j < players.length; j++) {
-        //     int[] player = players[j];
-        //     int p = 0;
-        //
-        //     for (int i = 0, length = shots.length; i < length; i++) {
-        //         int[] shot = shots[i];
-        //         if (player[0] <= shot[1] && shot[0] <= player[1])
-        //             p++;
-        //     }
-        //
-        //     //System.err.printf("%d) %d\n",j, p);
-        //     sum += p;
-        // }
-
 
         return sum;
     }
