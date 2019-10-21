@@ -39,9 +39,12 @@ public class Solution {
                 delta = 1;
 
                 // next
-                shot = shots[j++];
-                if (i == shot[0]) {
-                    delta = 2;
+                ++j;
+                if(j<shots.length) {
+                    shot = shots[j];
+                    if (i == shot[0]) {
+                        delta = 2;
+                    }
                 }
             }
 
