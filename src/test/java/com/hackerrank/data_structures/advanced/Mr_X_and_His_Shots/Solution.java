@@ -14,28 +14,42 @@ public class Solution {
         int sum = 0;
 
         // markup
-        int N = 100_000_000;
+        //int N = 100_000_000;
+        int N = 100;
         int[] m = new int[N];
 
-        short got = 0;
+        int[] g = new int[N];
+        int[] d = new int[N];
+
         byte delta = 0;
 
         int j = 0;
         int[] shot = shots[j];
 
         for (int i = 0; i < N; ++i) {
-            int s = shot[0];
-            int e = shot[1];
+            int j_shadow = j;
 
-            if (i < s) {
-                // nop
+            if (i < shot[0]) {
+                delta = 0;
             }
-            else if (i >= s && i<e) {
-                ++got;
+            else if (i >= shot[0] && i < shot[1]) {
+                delta = 1;
+            }
+            else if (i == shot[1]) {
+                delta = 1;
+
+                // next
+                shot = shots[j++];
+                if (i == shot[0]) {
+                    delta = 2;
+                }
             }
 
+            // memoization
+            g[i] = j_shadow;
+            d[i] = delta;
 
-            m[i] = delta << 20 | got;
+            //m[i] = delta << 20 | j_shadow;
         }
 
         return sum;
@@ -70,4 +84,6 @@ public class Solution {
         }
         return new Object[]{shots, players};
     }
+
+
 }
