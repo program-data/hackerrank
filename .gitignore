@@ -68,3 +68,4 @@ fabric.properties
 # test cases
 input*.txt
 output*.txt
+*.pdf

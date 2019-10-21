@@ -1,6 +1,8 @@
 package com.hackerrank.data_structures.advanced.Counting_on_a_tree;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -13,6 +15,8 @@ public class Solution {
     // tests ok
     private static int count(int[] path1, int[] path2) {
         int k = 0;
+
+        //return 0;
 
         int[][] list1 = Arrays.stream(path1).mapToObj(i -> new int[]{values[i - 1], i}).sorted(Comparator.comparingInt((int[] o) -> o[0]).thenComparingInt(o -> o[1])).collect(Collectors.toList()).toArray(new int[][]{});
         int[][] list2 = Arrays.stream(path2).mapToObj(i -> new int[]{values[i - 1], i}).sorted(Comparator.comparingInt((int[] o) -> o[0]).thenComparingInt(o -> o[1])).collect(Collectors.toList()).toArray(new int[][]{});
@@ -73,13 +77,18 @@ public class Solution {
     private static HashMap<Integer, int[]> tailMap = new HashMap<>();
     // периметр ядра (узлы держатели хвостов)
     private static HashSet<Integer> corePerimeter = new HashSet<>();
+    private static int corePerimeterSize = 0;
 
     // update: tree given ordered [parent -> slave]
     static int[] solve(int[] values, int[][] tree, int[][] queries) {
         Solution.N = values.length;
         Solution.values = values;
 
+        s = new int[N+1];
+        d = new int[N+1];
+
         buildTree(tree);
+        corePerimeterSize =corePerimeter.size();
 
         int[] result = new int[queries.length];
         for (int i = 0; i < queries.length; i++) {
@@ -87,6 +96,8 @@ public class Solution {
             int[] path1 = getPath(query[0], query[1]);
             int[] path2 = getPath(query[2], query[3]);
             result[i] = count(path1, path2);
+            // if (i % 100 == 0)
+            //     System.err.println(i);
         }
 
         return result;
@@ -99,7 +110,7 @@ public class Solution {
             Node n2 = Node.of(tree[i][1]);
             Node parent = n1.peerQu >= n2.peerQu || n1.n == 1 ? n1 : n2;
             Node slave = n1.peerQu >= n2.peerQu ? n2 : n1;
-            parent.add(slave);
+            parent.inc();
             slave.setParent(parent);
         }
 
@@ -169,44 +180,40 @@ public class Solution {
         }
     }
 
+    private static int[] s;
+    private static int[] d;
+
     private static int[] getCorePath(int src, int dst) {
         if (src == dst) {
             return new int[]{src};
         }
-        else if (corePerimeter.size() == 1) {
+        else if (corePerimeterSize == 1) {
             // крата вылетов из ядра
             // public static HashMap<Integer, HashSet<Integer>> exitMap = new HashMap<>();
             // Ядро из одного узлв
             int singleCoreNode = 0;
             return new int[]{singleCoreNode};
         }
-        else if (corePerimeter.size() == 2) {
+        else if (corePerimeterSize == 2) {
             return new int[]{src, dst};
         }
         else {
-            LinkedList<Node> srcList = new LinkedList<>();
-            LinkedList<Node> dstList = new LinkedList<>();
-
+            int i = 0;
             for (Node n = Node.of(src); n != null; n = n.parent)
-                srcList.add(n);
+                s[i++] = n.n;
 
+            int j = 0;
             for (Node n = Node.of(dst); n != null; n = n.parent)
-                dstList.add(n);
+                d[j++] = n.n;
 
-            Node common = null;
-            for (; !srcList.isEmpty() && !dstList.isEmpty() && srcList.getLast() == dstList.getLast(); ) {
-                common = srcList.getLast();
-                srcList.removeLast();
-                dstList.removeLast();
-            }
+            for(;i>=0 && j>=0 && s[i] == d[j]; --i, --j);
 
-            srcList.add(common);
-            Collections.reverse(dstList);
-            srcList.addAll(dstList);
+            int[] path = new int[i + 1 + j + 1 + 1];
 
-            int[] result = srcList.stream().mapToInt(node -> node.n).toArray();
+            System.arraycopy(s,0,path, 0,i+2);
+            System.arraycopy(d,0,path, i+2,j + 1);
 
-            return result;
+            return path;
         }
     }
 
@@ -214,8 +221,7 @@ public class Solution {
     private static int[] getTailToCorePath(int src, int[] tail) {
         int i;
         for (i = 0; i < tail.length; ++i) if (tail[i] == src) break;
-        int[] range = Arrays.copyOfRange(tail, i, tail.length);
-        return range;
+        return Arrays.copyOfRange(tail, i, tail.length);
     }
 
     // c ообоих концов одновременно i <= j by design
@@ -224,8 +230,7 @@ public class Solution {
         for (i = 0; i < tail.length; ++i) if (tail[i] == src || tail[i] == dst) break;
         for (j = tail.length - 1; j >= 0; --j) if (tail[j] == src || tail[j] == dst) break;
 
-        int[] range = Arrays.copyOfRange(tail, i, j + 1);
-        return range;
+        return Arrays.copyOfRange(tail, i, j + 1);
     }
 
     public static void main(String[] args) throws IOException {
@@ -289,7 +294,7 @@ public class Solution {
             ++peerQu;
         }
 
-        void add(Node slave) {
+        void inc() {
             ++peerQu;
         }
 
@@ -297,6 +302,7 @@ public class Solution {
         public String toString() {
             return String.format("%d -> %s", n, parent != null ? parent.n : "null");
         }
+
 
     }
 }

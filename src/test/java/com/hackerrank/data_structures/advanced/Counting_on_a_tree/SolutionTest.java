@@ -17,9 +17,9 @@ import java.util.Scanner;
 
 public class SolutionTest {
     // TEST CASE #
-    private static final int TEST_CASE = 4;
+    private static final int TEST_CASE = 99;
 
-    @Test//(timeout = 15_000)
+    @Test//(timeout = 4_000)
     public void test() throws FileNotFoundException {
         long t0 = System.nanoTime();
         Object[] objects = load(String.format("D:/hackerrank/src/test/java/com/hackerrank/data_structures/advanced/Counting_on_a_tree/input%02d.txt", TEST_CASE));
