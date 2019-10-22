@@ -10,12 +10,12 @@ import java.util.*;
 public class Solution {
 
     // Complete the solve function below.
-    static int solve(int[][] shots, int[][] players) {
-        int sum = 0;
+    static long solve(int[][] shots, int[][] players) {
+        Arrays.sort(shots, Comparator.comparingInt(o -> o[0]));
 
-        // markup
-        //int N = 100_000_000;
-        int N = 100;
+        // memoization
+        int N = 100_000_000;
+        //int N = 10;
         int[] m = new int[N];
 
         int[] g = new int[N];
@@ -29,7 +29,7 @@ public class Solution {
         for (int i = 0; i < N; ++i) {
             int j_shadow = j;
 
-            if (i < shot[0]) {
+            if (i < shot[0] || i > shot[1]) {
                 delta = 0;
             }
             else if (i >= shot[0] && i < shot[1]) {
@@ -48,11 +48,20 @@ public class Solution {
                 }
             }
 
-            // memoization
             g[i] = j_shadow;
             d[i] = delta;
 
             //m[i] = delta << 20 | j_shadow;
+        }
+
+        // summarizing
+        int sum = 0;
+        for(int i=0;i<players.length;++i) {
+            int g1 = g[players[i][1]];
+            int g0 = g[players[i][0]];
+            int d1 = d[players[i][1]];
+            int s = g1-g0+d1;
+            sum+=s;
         }
 
         return sum;
@@ -65,7 +74,7 @@ public class Solution {
         Object[] o = load(scanner);
         int[][] shots = (int[][]) o[0];
         int[][] players = (int[][]) o[1];
-        int result = solve(shots, players);
+        long result = solve(shots, players);
         bufferedWriter.write(String.valueOf(result));
         bufferedWriter.newLine();
         bufferedWriter.close();
