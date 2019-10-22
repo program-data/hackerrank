@@ -27,6 +27,15 @@ public class SolutionTest {
         int[][] tree = (int[][]) objects[1];
         int[][] queries = (int[][]) objects[2];
         solution = Solution.solve(values, tree, queries);
+        // solution = Solution.solve(values, tree, queries);
+        // solution = Solution.solve(values, tree, queries);
+        // solution = Solution.solve(values, tree, queries);
+        // solution = Solution.solve(values, tree, queries);
+        // solution = Solution.solve(values, tree, queries);
+        // solution = Solution.solve(values, tree, queries);
+        // solution = Solution.solve(values, tree, queries);
+        // solution = Solution.solve(values, tree, queries);
+        // solution = Solution.solve(values, tree, queries);
         long t1 = System.nanoTime();
         System.err.printf("%.3f\n", (t1 - t0) * 0.000_000_001);
     }

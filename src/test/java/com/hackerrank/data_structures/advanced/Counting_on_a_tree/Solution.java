@@ -202,6 +202,7 @@ public class Solution {
             return new int[]{src, dst};
         }
         else {
+            // debug
             // Arrays.fill(s,0);
             // Arrays.fill(d,0);
 
@@ -219,7 +220,7 @@ public class Solution {
             if (i >= 0 && j >= 0) {
                 path = new int[i + 1 + j + 1 + 1];
                 System.arraycopy(s, 0, path, 0, i + 2);
-                // todo remove reverse
+                // debug
                 // reverse(d, 0, j+1);
                 System.arraycopy(d, 0, path, i + 2, j + 1);
             }
