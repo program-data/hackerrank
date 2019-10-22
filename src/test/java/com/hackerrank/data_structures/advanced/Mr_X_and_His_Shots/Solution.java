@@ -1,7 +1,11 @@
 package com.hackerrank.data_structures.advanced.Mr_X_and_His_Shots;
 
-import java.io.*;
-import java.util.*;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Scanner;
 
 /**
  * @author michael.malevannyy@gmail.com, 10.10.2019
@@ -10,63 +14,63 @@ import java.util.*;
 public class Solution {
 
     // Complete the solve function below.
-    static long solve(int[][] shots, int[][] players) {
-        Arrays.sort(shots, Comparator.comparingInt(o -> o[0]));
+    static long solve(int[][] shots0, int[][] players) {
+        Arrays.sort(shots0, (o1, o2) -> Integer.compare(o2[0], o1[0]));
+        int[][] shots1 = Arrays.copyOf(shots0, shots0.length);
+        Arrays.sort(shots1, Comparator.comparingInt(o -> o[1]));
 
-        // memoization
-        int N = 100_000_000;
-        //int N = 10;
-        int[] m = new int[N];
+        int[] ints1 = Arrays.stream(shots1).mapToInt(value -> value[1]).toArray();
+        int[] ints0 = Arrays.stream(shots0).mapToInt(value -> value[0]).toArray();
 
-        int[] g = new int[N];
-        int[] d = new int[N];
+        int n = shots0.length;
 
-        byte delta = 0;
-
-        int j = 0;
-        int[] shot = shots[j];
-
-        for (int i = 0; i < N; ++i) {
-            int j_shadow = j;
-
-            if (i < shot[0] || i > shot[1]) {
-                delta = 0;
-            }
-            else if (i >= shot[0] && i < shot[1]) {
-                delta = 1;
-            }
-            else if (i == shot[1]) {
-                delta = 1;
-
-                // next
-                ++j;
-                if(j<shots.length) {
-                    shot = shots[j];
-                    if (i == shot[0]) {
-                        delta = 2;
-                    }
-                }
-            }
-
-            g[i] = j_shadow;
-            d[i] = delta;
-
-            //m[i] = delta << 20 | j_shadow;
-        }
-
-        // summarizing
         int sum = 0;
-        for(int i=0;i<players.length;++i) {
-            int g1 = g[players[i][1]];
-            int g0 = g[players[i][0]];
-            int d1 = d[players[i][1]];
-            int s = g1-g0+d1;
-            sum+=s;
+        for (int i = 0; i < players.length; ++i) {
+            int s = players[i][0];
+            int e = players[i][1];
+
+
+            // int j = (int) Arrays.stream(ints1).filter(value -> value < s).count();
+            int j = lesser(ints1, s);
+
+            // int k = (int) Arrays.stream(ints0).filter(value -> value > e).count();
+            int k = grater(ints0, e);
+
+            int x = n - j - k;
+
+            sum += x;
         }
 
         return sum;
     }
 
+    private static int lesser(int[] ints, int s) {
+        //  return (int) Arrays.stream(ints).filter(value -> value < s).count();
+        // int i;
+        // for (i = 0; ints[i] < s; i++) ;
+
+        int i = 0;
+        int j = ints.length;
+
+        while (j - i > 0) {
+            int x = (j - i) > 1 ? (j - i) / 2 : i;
+            int v = ints[x];
+            if (v >= s)
+                i = x;
+            else
+                j = x;
+        }
+
+        return i;
+    }
+
+    private static int grater(int[] ints, int e) {
+        // return (int) Arrays.stream(ints).filter(value -> value > e).count();
+        int i;
+        for (i = 0; ints[i] > e; i++) ;
+        return i;
+
+    }
 
     public static void main(String[] args) throws IOException {
         final Scanner scanner = new Scanner(System.in);
