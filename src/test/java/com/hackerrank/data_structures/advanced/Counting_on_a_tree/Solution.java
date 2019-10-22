@@ -3,8 +3,10 @@ package com.hackerrank.data_structures.advanced.Counting_on_a_tree;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Scanner;
 
 /**
  * @author michael.malevannyy@gmail.com, 10.10.2019
@@ -16,53 +18,53 @@ public class Solution {
     private static int count(int[] path1, int[] path2) {
         int k = 0;
 
-        //return 0;
+        return 0;
 
-        int[][] list1 = Arrays.stream(path1).mapToObj(i -> new int[]{values[i - 1], i}).sorted(Comparator.comparingInt((int[] o) -> o[0]).thenComparingInt(o -> o[1])).collect(Collectors.toList()).toArray(new int[][]{});
-        int[][] list2 = Arrays.stream(path2).mapToObj(i -> new int[]{values[i - 1], i}).sorted(Comparator.comparingInt((int[] o) -> o[0]).thenComparingInt(o -> o[1])).collect(Collectors.toList()).toArray(new int[][]{});
-
-        for (int i = 0, j = 0, size1 = list1.length, size2 = list2.length; i < size1 && j < size2; /*BEWARE*/) {
-            int[] ni = list1[i];
-            int[] nj = list2[j];
-            if (ni[0] < nj[0]) {
-                ++i;
-            }
-            else if (ni[0] > nj[0]) {
-                ++j;
-            }
-            else {
-                int si = i; // стартовый индекс в большом массиве
-                for (; i < size1 && list1[i][0] == ni[0]; ++i) ;
-
-                int sj = j; // стартовый индекс в большом массиве
-                for (; j < size2 && list2[j][0] == nj[0]; ++j) ;
-
-                // размер одинакоывых >=1 т.к как минимум один точно будет = текущий
-                // дале есть смысл идти только если кто-то ширше 1 символа
-                int di = i - si;
-                int dj = j - sj;
-
-                int q = 0;
-                // ищщем количество одинаковых индексов и указаных поддиапазонах и вычитаем его из произведения разницы
-                for (int ii = si, ij = sj; ii < i && ij < j; /* BEWARE*/) {
-                    if (list1[ii][1] < list2[ij][1]) {
-                        ++ii;
-                    }
-                    else if (list1[ii][1] > list2[ij][1]) {
-                        ++ij;
-                    }
-                    else {
-                        ++q;
-                        ++ii;
-                        ++ij;
-                    }
-                }
-
-                k += di * dj - q;
-            }
-        }
-
-        return k;
+        // int[][] list1 = Arrays.stream(path1).mapToObj(i -> new int[]{values[i - 1], i}).sorted(Comparator.comparingInt((int[] o) -> o[0]).thenComparingInt(o -> o[1])).collect(Collectors.toList()).toArray(new int[][]{});
+        // int[][] list2 = Arrays.stream(path2).mapToObj(i -> new int[]{values[i - 1], i}).sorted(Comparator.comparingInt((int[] o) -> o[0]).thenComparingInt(o -> o[1])).collect(Collectors.toList()).toArray(new int[][]{});
+        //
+        // for (int i = 0, j = 0, size1 = list1.length, size2 = list2.length; i < size1 && j < size2; /*BEWARE*/) {
+        //     int[] ni = list1[i];
+        //     int[] nj = list2[j];
+        //     if (ni[0] < nj[0]) {
+        //         ++i;
+        //     }
+        //     else if (ni[0] > nj[0]) {
+        //         ++j;
+        //     }
+        //     else {
+        //         int si = i; // стартовый индекс в большом массиве
+        //         for (; i < size1 && list1[i][0] == ni[0]; ++i) ;
+        //
+        //         int sj = j; // стартовый индекс в большом массиве
+        //         for (; j < size2 && list2[j][0] == nj[0]; ++j) ;
+        //
+        //         // размер одинакоывых >=1 т.к как минимум один точно будет = текущий
+        //         // дале есть смысл идти только если кто-то ширше 1 символа
+        //         int di = i - si;
+        //         int dj = j - sj;
+        //
+        //         int q = 0;
+        //         // ищщем количество одинаковых индексов и указаных поддиапазонах и вычитаем его из произведения разницы
+        //         for (int ii = si, ij = sj; ii < i && ij < j; /* BEWARE*/) {
+        //             if (list1[ii][1] < list2[ij][1]) {
+        //                 ++ii;
+        //             }
+        //             else if (list1[ii][1] > list2[ij][1]) {
+        //                 ++ij;
+        //             }
+        //             else {
+        //                 ++q;
+        //                 ++ii;
+        //                 ++ij;
+        //             }
+        //         }
+        //
+        //         k += di * dj - q;
+        //     }
+        // }
+        //
+        // return k;
     }
 
     // task size
@@ -84,20 +86,19 @@ public class Solution {
         Solution.N = values.length;
         Solution.values = values;
 
-        s = new int[N+1];
-        d = new int[N+1];
+        s = new int[N + 1];
+        d = new int[N + 1];
 
         buildTree(tree);
-        corePerimeterSize =corePerimeter.size();
+        corePerimeterSize = corePerimeter.size();
 
         int[] result = new int[queries.length];
         for (int i = 0; i < queries.length; i++) {
+            //System.err.println(i);
             int[] query = queries[i];
             int[] path1 = getPath(query[0], query[1]);
             int[] path2 = getPath(query[2], query[3]);
             result[i] = count(path1, path2);
-            // if (i % 100 == 0)
-            //     System.err.println(i);
         }
 
         return result;
@@ -198,6 +199,9 @@ public class Solution {
             return new int[]{src, dst};
         }
         else {
+            Arrays.fill(s,0);
+            Arrays.fill(d,0);
+
             int i = 0;
             for (Node n = Node.of(src); n != null; n = n.parent)
                 s[i++] = n.n;
@@ -206,14 +210,38 @@ public class Solution {
             for (Node n = Node.of(dst); n != null; n = n.parent)
                 d[j++] = n.n;
 
-            for(;i>=0 && j>=0 && s[i] == d[j]; --i, --j);
+            for (; --i >= 0 && --j >= 0 && s[i] == d[j]; ) ;
 
-            int[] path = new int[i + 1 + j + 1 + 1];
-
-            System.arraycopy(s,0,path, 0,i+2);
-            System.arraycopy(d,0,path, i+2,j + 1);
+            int[] path;
+            if (i >= 0 && j >= 0) {
+                path = new int[i + 1 + j + 1 + 1];
+                System.arraycopy(s, 0, path, 0, i + 2);
+                // todo remove reverse
+                reverse(d, 0, j+1);
+                System.arraycopy(d, 0, path, i + 2, j + 1);
+            }
+            else if (i < 0) {
+                path = new int[j + 1];
+                System.arraycopy(d, 0, path, 0, j + 1);
+            }
+            else {
+                path = new int[i + 1];
+                System.arraycopy(s, 0, path, 0, i + 1);
+            }
 
             return path;
+        }
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private static void reverse(int[] a, int fromIndex, int toIndex) {
+        --toIndex;
+        for(;fromIndex < toIndex;) {
+            int x = a[toIndex];
+            a[toIndex] = a[fromIndex];
+            a[fromIndex] = x;
+            --toIndex;
+            ++fromIndex;
         }
     }
 

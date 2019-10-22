@@ -17,7 +17,7 @@ import java.util.Scanner;
 
 public class SolutionTest {
     // TEST CASE #
-    private static final int TEST_CASE = 99;
+    private static final int TEST_CASE = 5;
 
     @Test//(timeout = 4_000)
     public void test() throws FileNotFoundException {
