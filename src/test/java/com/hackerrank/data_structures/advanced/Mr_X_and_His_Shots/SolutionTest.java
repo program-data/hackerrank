@@ -17,7 +17,7 @@ import static com.hackerrank.data_structures.advanced.Mr_X_and_His_Shots.Solutio
  */
 public class SolutionTest {
     // TEST CASE #
-    private static final int TEST_CASE = 0;
+    private static final int TEST_CASE = 17;
 
     @Test   //(timeout = 4_000)
     public void test() throws FileNotFoundException {
