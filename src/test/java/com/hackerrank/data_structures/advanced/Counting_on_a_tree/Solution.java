@@ -3,10 +3,8 @@ package com.hackerrank.data_structures.advanced.Counting_on_a_tree;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Scanner;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author michael.malevannyy@gmail.com, 10.10.2019
@@ -18,53 +16,51 @@ public class Solution {
     private static int count(int[] path1, int[] path2) {
         int k = 0;
 
-        return 0;
+        int[][] list1 = Arrays.stream(path1).mapToObj(i -> new int[]{values[i - 1], i}).sorted(Comparator.comparingInt((int[] o) -> o[0]).thenComparingInt(o -> o[1])).collect(Collectors.toList()).toArray(new int[][]{});
+        int[][] list2 = Arrays.stream(path2).mapToObj(i -> new int[]{values[i - 1], i}).sorted(Comparator.comparingInt((int[] o) -> o[0]).thenComparingInt(o -> o[1])).collect(Collectors.toList()).toArray(new int[][]{});
 
-        // int[][] list1 = Arrays.stream(path1).mapToObj(i -> new int[]{values[i - 1], i}).sorted(Comparator.comparingInt((int[] o) -> o[0]).thenComparingInt(o -> o[1])).collect(Collectors.toList()).toArray(new int[][]{});
-        // int[][] list2 = Arrays.stream(path2).mapToObj(i -> new int[]{values[i - 1], i}).sorted(Comparator.comparingInt((int[] o) -> o[0]).thenComparingInt(o -> o[1])).collect(Collectors.toList()).toArray(new int[][]{});
-        //
-        // for (int i = 0, j = 0, size1 = list1.length, size2 = list2.length; i < size1 && j < size2; /*BEWARE*/) {
-        //     int[] ni = list1[i];
-        //     int[] nj = list2[j];
-        //     if (ni[0] < nj[0]) {
-        //         ++i;
-        //     }
-        //     else if (ni[0] > nj[0]) {
-        //         ++j;
-        //     }
-        //     else {
-        //         int si = i; // стартовый индекс в большом массиве
-        //         for (; i < size1 && list1[i][0] == ni[0]; ++i) ;
-        //
-        //         int sj = j; // стартовый индекс в большом массиве
-        //         for (; j < size2 && list2[j][0] == nj[0]; ++j) ;
-        //
-        //         // размер одинакоывых >=1 т.к как минимум один точно будет = текущий
-        //         // дале есть смысл идти только если кто-то ширше 1 символа
-        //         int di = i - si;
-        //         int dj = j - sj;
-        //
-        //         int q = 0;
-        //         // ищщем количество одинаковых индексов и указаных поддиапазонах и вычитаем его из произведения разницы
-        //         for (int ii = si, ij = sj; ii < i && ij < j; /* BEWARE*/) {
-        //             if (list1[ii][1] < list2[ij][1]) {
-        //                 ++ii;
-        //             }
-        //             else if (list1[ii][1] > list2[ij][1]) {
-        //                 ++ij;
-        //             }
-        //             else {
-        //                 ++q;
-        //                 ++ii;
-        //                 ++ij;
-        //             }
-        //         }
-        //
-        //         k += di * dj - q;
-        //     }
-        // }
-        //
-        // return k;
+        for (int i = 0, j = 0, size1 = list1.length, size2 = list2.length; i < size1 && j < size2; /*BEWARE*/) {
+            int[] ni = list1[i];
+            int[] nj = list2[j];
+            if (ni[0] < nj[0]) {
+                ++i;
+            }
+            else if (ni[0] > nj[0]) {
+                ++j;
+            }
+            else {
+                int si = i; // стартовый индекс в большом массиве
+                for (; i < size1 && list1[i][0] == ni[0]; ++i) ;
+
+                int sj = j; // стартовый индекс в большом массиве
+                for (; j < size2 && list2[j][0] == nj[0]; ++j) ;
+
+                // размер одинакоывых >=1 т.к как минимум один точно будет = текущий
+                // дале есть смысл идти только если кто-то ширше 1 символа
+                int di = i - si;
+                int dj = j - sj;
+
+                int q = 0;
+                // ищщем количество одинаковых индексов и указаных поддиапазонах и вычитаем его из произведения разницы
+                for (int ii = si, ij = sj; ii < i && ij < j; /* BEWARE*/) {
+                    if (list1[ii][1] < list2[ij][1]) {
+                        ++ii;
+                    }
+                    else if (list1[ii][1] > list2[ij][1]) {
+                        ++ij;
+                    }
+                    else {
+                        ++q;
+                        ++ii;
+                        ++ij;
+                    }
+                }
+
+                k += di * dj - q;
+            }
+        }
+
+        return k;
     }
 
     // task size
@@ -86,8 +82,7 @@ public class Solution {
         Solution.N = values.length;
         Solution.values = values;
 
-        s = new int[N + 1];
-        d = new int[N + 1];
+        p = new int[N + 1];
 
         buildTree(tree);
         corePerimeterSize = corePerimeter.size();
@@ -112,7 +107,7 @@ public class Solution {
             Node n1 = Node.of(tree[i][0]);
             Node n2 = Node.of(tree[i][1]);
             Node parent = n1.peerQu >= n2.peerQu || n1.n == 1 ? n1 : n2;
-            Node slave = n1.peerQu >= n2.peerQu ? n2 : n1;
+            Node slave = n1.peerQu >= n2.peerQu || n1.n == 1 ? n2 : n1;
             parent.inc();
             slave.setParent(parent);
         }
@@ -122,7 +117,7 @@ public class Solution {
         tailCore = new int[N + 1];
 
         // хвосты
-        for (int k = 1; k<=N;++k) {
+        for (int k = 1; k <= N; ++k) {
             Node node = Node.of(k);
             if (node.peerQu == 1) {
                 int tailID = node.n;
@@ -184,8 +179,7 @@ public class Solution {
         }
     }
 
-    private static int[] s;
-    private static int[] d;
+    private static int[] p;
 
     private static int[] getCorePath(int src, int dst) {
         if (src == dst) {
@@ -203,35 +197,32 @@ public class Solution {
         }
         else {
             // debug
-            // Arrays.fill(s,0);
-            // Arrays.fill(d,0);
+            Arrays.fill(p, 0);
 
+            Node s = Node.of(src);
+            Node d = Node.of(dst);
             int i = 0;
-            for (Node n = Node.of(src); n != null; n = n.parent)
-                s[i++] = n.n;
-
-            int j = 0;
-            for (Node n = Node.of(dst); n != null; n = n.parent)
-                d[j++] = n.n;
-
-            for (; --i >= 0 && --j >= 0 && s[i] == d[j]; ) ;
-
-            int[] path;
-            if (i >= 0 && j >= 0) {
-                path = new int[i + 1 + j + 1 + 1];
-                System.arraycopy(s, 0, path, 0, i + 2);
-                // debug
-                // reverse(d, 0, j+1);
-                System.arraycopy(d, 0, path, i + 2, j + 1);
+            p[i++] = s.n;
+            p[i++] = d.n;
+            while (s.n != d.n) {
+                if (s.n > d.n) {
+                    s = s.parent;
+                    if(p[i-1] == s.n)
+                        break;
+                    p[i++] = s.n;
+                }
+                else {
+                    d = d.parent;
+                    if(p[i-1] == d.n)
+                        break;
+                    p[i++] = d.n;
+                }
             }
-            else if (i < 0) {
-                path = new int[j + 1];
-                System.arraycopy(d, 0, path, 0, j + 1);
-            }
-            else {
-                path = new int[i + 1];
-                System.arraycopy(s, 0, path, 0, i + 1);
-            }
+
+            //p[i++] = s.n;
+
+            int[] path = new int[i];
+            System.arraycopy(p,0,path,0, i);
 
             return path;
         }
@@ -240,7 +231,7 @@ public class Solution {
     @SuppressWarnings("SameParameterValue")
     private static void reverse(int[] a, int fromIndex, int toIndex) {
         --toIndex;
-        for(;fromIndex < toIndex;) {
+        for (; fromIndex < toIndex; ) {
             int x = a[toIndex];
             a[toIndex] = a[fromIndex];
             a[fromIndex] = x;
@@ -323,7 +314,7 @@ public class Solution {
         private static Node[] nodes;
 
         public static void init() {
-             nodes = new Node[N+1];
+            nodes = new Node[N + 1];
         }
 
         void setParent(Node parent) {
