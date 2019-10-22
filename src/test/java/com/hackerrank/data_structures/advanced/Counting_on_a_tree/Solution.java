@@ -105,6 +105,8 @@ public class Solution {
     }
 
     private static void buildTree(int[][] tree) {
+        Node.init();
+
         // полное дерево
         for (int i = 0, size = tree.length; i < size; i++) {
             Node n1 = Node.of(tree[i][0]);
@@ -120,7 +122,8 @@ public class Solution {
         tailCore = new int[N + 1];
 
         // хвосты
-        for (Node node : Node.map.values()) {
+        for (int k = 1; k<=N;++k) {
+            Node node = Node.of(k);
             if (node.peerQu == 1) {
                 int tailID = node.n;
                 // строим хвост до узла с > 2 пирами
@@ -199,8 +202,8 @@ public class Solution {
             return new int[]{src, dst};
         }
         else {
-            Arrays.fill(s,0);
-            Arrays.fill(d,0);
+            // Arrays.fill(s,0);
+            // Arrays.fill(d,0);
 
             int i = 0;
             for (Node n = Node.of(src); n != null; n = n.parent)
@@ -217,7 +220,7 @@ public class Solution {
                 path = new int[i + 1 + j + 1 + 1];
                 System.arraycopy(s, 0, path, 0, i + 2);
                 // todo remove reverse
-                reverse(d, 0, j+1);
+                // reverse(d, 0, j+1);
                 System.arraycopy(d, 0, path, i + 2, j + 1);
             }
             else if (i < 0) {
@@ -306,16 +309,21 @@ public class Solution {
 
         // registry
         static Node of(int n) {
-            Node node = map.get(n);
+            Node node = nodes[n];
             if (node == null) {
                 node = new Node(n);
-                map.put(n, node);
+                nodes[n] = (node);
             }
             return node;
         }
 
         // можно заменить массивом Node[N+1]
-        private static HashMap<Integer, Node> map = new HashMap<>();
+        // private static HashMap<Integer, Node> map = new HashMap<>();
+        private static Node[] nodes;
+
+        public static void init() {
+             nodes = new Node[N+1];
+        }
 
         void setParent(Node parent) {
             this.parent = parent;
