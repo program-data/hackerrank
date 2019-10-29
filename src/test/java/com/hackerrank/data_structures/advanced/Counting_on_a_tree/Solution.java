@@ -7,7 +7,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * @author michael.malevannyy@gmail.com, 10.10.2019
+ * @author michael.malevannyy@gmail.com, 10/10/2019
  */
 @SuppressWarnings("ForLoopReplaceableByForEach")
 public class Solution {
